@@ -10,6 +10,7 @@ export default function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [accessCode, setAccessCode] = useState('');
+  const [studentClass, setStudentClass] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -45,6 +46,7 @@ export default function Register() {
           id: authData.user.id,
           full_name: fullName,
           role: role,
+          student_class: role === 'student' ? studentClass : null,
         }
       ]);
 
@@ -99,6 +101,15 @@ export default function Register() {
             required
             placeholder="••••••••"
             minLength={6}
+          />
+
+          <label className="form-label">Class / Batch Name (Students Only)</label>
+          <input
+            type="text"
+            className="input-field"
+            value={studentClass}
+            onChange={(e) => setStudentClass(e.target.value)}
+            placeholder="e.g. Class 10A or Web Dev Cohort 1"
           />
 
           <label className="form-label">Teacher Access Code (Optional)</label>

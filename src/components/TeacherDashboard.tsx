@@ -7,6 +7,7 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
   const [activeTab, setActiveTab] = useState<'overview' | 'grading' | 'qa' | 'roster'>('overview');
   const [loading, setLoading] = useState(true);
   const [teacherName, setTeacherName] = useState('Teacher');
+  const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
 
   const [tasks, setTasks] = useState<any[]>([]);
   const [submissions, setSubmissions] = useState<any[]>([]);
@@ -74,7 +75,7 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
   };
 
   const fetchStudents = async () => {
-    const { data, error } = await supabase.from('profiles').select('id, full_name, role');
+    const { data, error } = await supabase.from('profiles').select('id, full_name, role, student_class');
     if (error) {
        setStudentError(error.message);
     }
@@ -444,13 +445,21 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
               {students.length === 0 && !studentError ? <p style={{color: '#94a3b8', fontStyle: 'italic'}}>No students registered yet.</p> : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '20px' }}>
                   {students.map((student) => (
-                    <div key={student.id} style={{ display: 'flex', alignItems: 'center', gap: '16px', background: 'rgba(255,255,255,0.03)', padding: '20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                      <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '1.5rem', color: 'white' }}>
+                    <div 
+                      key={student.id} 
+                      onClick={() => setSelectedStudent(student)}
+                      style={{ display: 'flex', alignItems: 'center', gap: '16px', background: 'rgba(255,255,255,0.03)', padding: '20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer', transition: 'all 0.2s ease' }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.08)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
+                    >
+                      <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '1.5rem', color: 'white', flexShrink: 0 }}>
                         {student.full_name.charAt(0).toUpperCase()}
                       </div>
                       <div>
                         <div style={{ fontWeight: '700', fontSize: '1.1rem', color: '#f8fafc' }}>{student.full_name}</div>
-                        <div style={{ fontSize: '0.85rem', color: 'var(--success)', fontWeight: '600', marginTop: '4px' }}>Active Student</div>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--success)', fontWeight: '600', marginTop: '4px' }}>
+                          {student.student_class ? `Class: ${student.student_class}` : 'Active Student'}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -461,6 +470,77 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
 
         </div>
       </section>
+
+      {/* Student Details Modal */}
+      {selectedStudent && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '20px', backdropFilter: 'blur(8px)' }}>
+          <div className="glass-panel" style={{ width: '100%', maxWidth: '800px', maxHeight: '90vh', overflowY: 'auto', padding: '40px', position: 'relative' }}>
+            <button 
+              onClick={() => setSelectedStudent(null)}
+              style={{ position: 'absolute', top: '24px', right: '24px', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', width: '36px', height: '36px', borderRadius: '50%', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '24px', marginBottom: '40px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '32px' }}>
+              <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '2.5rem', color: 'white' }}>
+                {selectedStudent.full_name.charAt(0).toUpperCase()}
+              </div>
+              <div>
+                <h2 style={{ fontSize: '2rem', fontWeight: '800', margin: 0 }}>{selectedStudent.full_name}</h2>
+                <div style={{ fontSize: '1.1rem', color: 'var(--success)', fontWeight: '600', marginTop: '4px' }}>
+                  {selectedStudent.student_class ? `Class: ${selectedStudent.student_class}` : 'No class specified'}
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '32px' }}>
+              <div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                  Submissions
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {submissions.filter(s => s.student_id === selectedStudent.id).length === 0 ? (
+                    <p style={{ color: '#94a3b8', fontStyle: 'italic', fontSize: '0.9rem' }}>No submissions found.</p>
+                  ) : (
+                    submissions.filter(s => s.student_id === selectedStudent.id).map(sub => (
+                      <div key={sub.id} style={{ background: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: '12px', borderLeft: sub.verified ? '3px solid var(--success)' : '3px solid var(--accent)' }}>
+                        <div style={{ fontWeight: '600', fontSize: '0.95rem' }}>{sub.tasks?.title}</div>
+                        <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '4px' }}>{new Date(sub.submitted_at).toLocaleDateString()}</div>
+                        {sub.verified && <div style={{ fontSize: '0.85rem', color: 'var(--success)', fontWeight: 'bold', marginTop: '8px' }}>{sub.points} Points</div>}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--error)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                  Questions Asked
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {doubts.filter(d => d.student_id === selectedStudent.id).length === 0 ? (
+                    <p style={{ color: '#94a3b8', fontStyle: 'italic', fontSize: '0.9rem' }}>No questions found.</p>
+                  ) : (
+                    doubts.filter(d => d.student_id === selectedStudent.id).map(doubt => (
+                      <div key={doubt.id} style={{ background: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: '12px', borderLeft: doubt.resolved ? '3px solid var(--success)' : '3px solid var(--error)' }}>
+                        <div style={{ fontSize: '0.95rem', lineHeight: '1.4' }}>"{doubt.question}"</div>
+                        {doubt.resolved && (
+                          <div style={{ fontSize: '0.85rem', color: 'var(--success)', marginTop: '8px', background: 'rgba(16, 185, 129, 0.1)', padding: '8px', borderRadius: '6px' }}>
+                            {doubt.answer}
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes ping { 75%, 100% { transform: scale(2); opacity: 0; } }
