@@ -1,14 +1,14 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
 
 :root {
-  --background: #0f172a; 
-  --foreground: #f8fafc; 
-  --primary: #3b82f6; 
-  --primary-hover: #2563eb; 
-  --secondary: #8b5cf6; 
+  --background: #f5f3ff; /* Light purple background */
+  --foreground: #1e293b; /* Dark slate text */
+  --primary: #8b5cf6; /* Figma Purple */
+  --primary-hover: #7c3aed; 
+  --secondary: #a855f7; 
   --accent: #f43f5e;
-  --glass-bg: rgba(30, 41, 59, 0.4); 
-  --glass-border: rgba(255, 255, 255, 0.08);
+  --panel-bg: #ffffff; /* White cards */
+  --panel-border: rgba(139, 92, 246, 0.1); /* Subtle purple border */
   --error: #ef4444; 
   --success: #10b981; 
   --font-outfit: 'Outfit', sans-serif;
@@ -22,10 +22,6 @@
 
 body {
   background-color: var(--background);
-  background-image: 
-    radial-gradient(circle at 15% 20%, rgba(59, 130, 246, 0.15) 0%, transparent 40%),
-    radial-gradient(circle at 85% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 40%);
-  background-attachment: fixed;
   color: var(--foreground);
   font-family: var(--font-outfit);
   min-height: 100vh;
@@ -44,33 +40,29 @@ button {
   font-family: inherit;
 }
 
-/* Core Glass Panel */
+/* Core White Panel */
 .glass-panel {
-  background: var(--glass-bg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--glass-border);
-  border-radius: 20px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 24px;
   padding: 28px;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.05);
 }
 
 /* Beautiful Cards */
 .task-card {
-  background: linear-gradient(145deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%);
-  border: 1px solid rgba(255,255,255,0.05);
-  padding: 20px;
-  border-radius: 14px;
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  position: relative;
-  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid var(--panel-border);
+  padding: 24px;
+  border-radius: 16px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.02);
 }
 
 .task-card:hover {
   transform: translateY(-4px);
-  background: linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
-  border-color: rgba(255,255,255,0.15);
-  box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+  border-color: rgba(139, 92, 246, 0.3);
+  box-shadow: 0 10px 25px rgba(139, 92, 246, 0.1);
 }
 
 /* Primary Button with Glow */
@@ -100,10 +92,10 @@ button {
 .input-field {
   width: 100%;
   padding: 14px 16px;
-  background: rgba(0, 0, 0, 0.25);
-  border: 1px solid var(--glass-border);
-  border-radius: 10px;
-  color: white;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  color: var(--foreground);
   margin-bottom: 20px;
   font-family: inherit;
   font-size: 1rem;
@@ -113,8 +105,8 @@ button {
 .input-field:focus {
   outline: none;
   border-color: var(--primary);
-  background: rgba(0, 0, 0, 0.4);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
 }
 
 .form-label {
@@ -125,7 +117,7 @@ button {
   font-weight: 300;
 }
 
-/* Custom Scrollbar for Notes */
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
 }
@@ -133,9 +125,37 @@ button {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.1);
+  background: #cbd5e1;
   border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Sidebar Utilities */
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  color: rgba(255,255,255,0.7);
+  border-radius: 12px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  width: 100%;
+  font-size: 1rem;
+  justify-content: flex-start;
+}
+
+.sidebar-link:hover {
+  background: rgba(255,255,255,0.1);
+  color: #ffffff;
+}
+
+.sidebar-link.active {
   background: rgba(255,255,255,0.2);
+  color: #ffffff;
 }

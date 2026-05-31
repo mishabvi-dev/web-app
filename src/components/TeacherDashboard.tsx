@@ -160,7 +160,7 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
 
   const getLeaderboard = () => {
     const scores: Record<string, any> = {};
-    submissions.forEach(sub => {
+    submissions.forEach((sub: any) => {
       if (sub.verified && sub.points) {
         if (!scores[sub.student_id]) {
           scores[sub.student_id] = { id: sub.student_id, name: sub.profiles?.full_name || 'Unknown', points: 0, avatar: sub.profiles?.avatar_url };
@@ -173,103 +173,93 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
   const leaderboard = getLeaderboard();
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div style={{ display: 'flex', width: '100%', height: '100vh', padding: '16px', gap: '24px' }}>
       
-      {/* Hero / Welcome Section */}
-      <section className="glass-panel" style={{ background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)', padding: '40px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        <h1 style={{ fontSize: '2.5rem', fontWeight: '800', marginBottom: '8px', letterSpacing: '-1px' }}>
-          Welcome back, <span style={{ color: 'var(--primary)' }}>{teacherName.split(' ')[0]}</span>! 👋
-        </h1>
-        <p style={{ color: '#94a3b8', fontSize: '1.1rem' }}>
-          {(ungradedSubmissions > 0 || unresolvedDoubts > 0) 
-            ? `You have ${ungradedSubmissions} submissions to grade and ${unresolvedDoubts} questions to answer.` 
-            : "You're all caught up! The class is running smoothly."}
-        </p>
-      </section>
-
-      {/* Metrics Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '24px' }}>
-        <div className="glass-panel" style={{ padding: '24px', display: 'flex', alignItems: 'center', gap: '16px', background: ungradedSubmissions > 0 ? 'rgba(245, 158, 11, 0.05)' : '' }}>
-          <div style={{ width: '50px', height: '50px', borderRadius: '12px', background: 'rgba(245, 158, 11, 0.1)', color: 'var(--accent)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-          </div>
-          <div>
-            <div style={{ fontSize: '1.5rem', fontWeight: '800', color: ungradedSubmissions > 0 ? 'var(--accent)' : '' }}>{ungradedSubmissions}</div>
-            <div style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: '600', textTransform: 'uppercase' }}>To Grade</div>
-          </div>
-        </div>
-        
-        <div className="glass-panel" style={{ padding: '24px', display: 'flex', alignItems: 'center', gap: '16px', background: unresolvedDoubts > 0 ? 'rgba(239, 68, 68, 0.05)' : '' }}>
-          <div style={{ width: '50px', height: '50px', borderRadius: '12px', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--error)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-          </div>
-          <div>
-            <div style={{ fontSize: '1.5rem', fontWeight: '800', color: unresolvedDoubts > 0 ? 'var(--error)' : '' }}>{unresolvedDoubts}</div>
-            <div style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: '600', textTransform: 'uppercase' }}>Open Questions</div>
-          </div>
-        </div>
-        
-        <div className="glass-panel" style={{ padding: '24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ width: '50px', height: '50px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.1)', color: 'var(--primary)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-          </div>
-          <div>
-            <div style={{ fontSize: '1.5rem', fontWeight: '800' }}>{totalStudents}</div>
-            <div style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: '600', textTransform: 'uppercase' }}>Active Students</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Tabbed Content */}
-      <section className="glass-panel" style={{ padding: 0, overflow: 'hidden' }}>
-        
-        {/* Tab Navigation */}
-        <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(0,0,0,0.2)', overflowX: 'auto', whiteSpace: 'nowrap', WebkitOverflowScrolling: 'touch' }}>
-          <button 
-            className={`tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
-            onClick={() => setActiveTab('overview')}
-            style={{ flexShrink: 0 }}
-          >
-            📊 Overview & Tools
-          </button>
-          <button 
-            className={`tab-btn ${activeTab === 'grading' ? 'active' : ''}`}
-            onClick={() => setActiveTab('grading')}
-            style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}
-          >
-            📥 Grading Inbox
-            {ungradedSubmissions > 0 && (
-              <span style={{ background: 'var(--accent)', color: '#fff', fontSize: '0.7rem', padding: '2px 8px', borderRadius: '12px', fontWeight: 'bold' }}>{ungradedSubmissions}</span>
-            )}
-          </button>
-          <button 
-            className={`tab-btn ${activeTab === 'qa' ? 'active' : ''}`}
-            onClick={() => setActiveTab('qa')}
-            style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}
-          >
-            🙋 Q&A
-            {unresolvedDoubts > 0 && (
-              <span style={{ background: 'var(--error)', color: '#fff', fontSize: '0.7rem', padding: '2px 8px', borderRadius: '12px', fontWeight: 'bold' }}>{unresolvedDoubts}</span>
-            )}
-          </button>
-          <button 
-            className={`tab-btn ${activeTab === 'roster' ? 'active' : ''}`}
-            onClick={() => setActiveTab('roster')}
-            style={{ flexShrink: 0 }}
-          >
-            👥 Roster
-          </button>
-          <button 
-            className={`tab-btn ${activeTab === 'leaderboard' ? 'active' : ''}`}
-            onClick={() => setActiveTab('leaderboard')}
-            style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: '8px' }}
-          >
-            🏆 Leaderboard
-          </button>
+      {/* Sidebar */}
+      <aside style={{ width: '260px', background: 'var(--primary)', borderRadius: '24px', padding: '32px 24px', color: 'white', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+        <div style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '48px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <span style={{ fontSize: '2rem' }}>🎓</span> WebDev LMS
         </div>
 
-        {/* Tab Content Areas */}
-        <div style={{ padding: '32px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flexGrow: 1 }}>
+          <button className={`sidebar-link ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')}>
+             📊 Overview
+          </button>
+          <button className={`sidebar-link ${activeTab === 'grading' ? 'active' : ''}`} onClick={() => setActiveTab('grading')}>
+             📥 Grading Inbox
+             {ungradedSubmissions > 0 && <span style={{ marginLeft: 'auto', background: 'rgba(255,255,255,0.2)', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem' }}>{ungradedSubmissions}</span>}
+          </button>
+          <button className={`sidebar-link ${activeTab === 'qa' ? 'active' : ''}`} onClick={() => setActiveTab('qa')}>
+             🙋 Q&A
+             {unresolvedDoubts > 0 && <span style={{ marginLeft: 'auto', background: 'var(--error)', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem' }}>{unresolvedDoubts}</span>}
+          </button>
+          <button className={`sidebar-link ${activeTab === 'roster' ? 'active' : ''}`} onClick={() => setActiveTab('roster')}>
+             👥 Roster
+          </button>
+          <button className={`sidebar-link ${activeTab === 'leaderboard' ? 'active' : ''}`} onClick={() => setActiveTab('leaderboard')}>
+             🏆 Leaderboard
+          </button>
+        </div>
+        
+        <button className="sidebar-link" onClick={async () => { await supabase.auth.signOut(); window.location.href='/login'; }}>
+           🚪 Logout
+        </button>
+      </aside>
+
+      {/* Main Content Area */}
+      <main className="glass-panel" style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto', padding: '32px' }}>
+         
+         {/* Top Header */}
+         <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+           <input type="text" placeholder="Search students or tasks..." className="input-field" style={{ width: '300px', marginBottom: 0, background: '#f8fafc', border: 'none', color: '#1e293b' }} />
+           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+             <div style={{ textAlign: 'right' }}>
+               <div style={{ fontWeight: '700', color: 'var(--foreground)' }}>{teacherName}</div>
+               <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Teacher</div>
+             </div>
+             <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%)', color: 'white', display: 'flex', justifyContent: 'center', alignItems: 'center', fontWeight: 'bold', fontSize: '1.2rem' }}>
+               {teacherName.charAt(0).toUpperCase()}
+             </div>
+           </div>
+         </header>
+
+         {/* Hero Section */}
+         <section style={{ background: 'linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%)', borderRadius: '24px', padding: '40px', color: 'white', marginBottom: '32px', position: 'relative', overflow: 'hidden' }}>
+            <h1 style={{ fontSize: '2.5rem', fontWeight: '800', marginBottom: '8px' }}>
+              Welcome back, {teacherName.split(' ')[0]}! 👋
+            </h1>
+            <p style={{ fontSize: '1.1rem', opacity: 0.9 }}>
+              {(ungradedSubmissions > 0 || unresolvedDoubts > 0) 
+                ? `You have ${ungradedSubmissions} submissions to grade and ${unresolvedDoubts} questions to answer.` 
+                : "You're all caught up! The class is running smoothly."}
+            </p>
+            <div style={{ position: 'absolute', right: '40px', top: '50%', transform: 'translateY(-50%)', fontSize: '6rem', opacity: 0.2 }}>
+              👨‍🏫
+            </div>
+         </section>
+
+         {/* Metrics Grid */}
+         {activeTab === 'overview' && (
+           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '24px', marginBottom: '32px' }}>
+             <div className="task-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '32px 24px', border: ungradedSubmissions > 0 ? '2px solid var(--accent)' : '' }}>
+               <div style={{ fontSize: '2.5rem', fontWeight: '800', color: 'var(--accent)', marginBottom: '8px' }}>{ungradedSubmissions}</div>
+               <div style={{ color: '#64748b', fontSize: '0.9rem', fontWeight: '600', textTransform: 'uppercase' }}>To Grade</div>
+             </div>
+             
+             <div className="task-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '32px 24px', border: unresolvedDoubts > 0 ? '2px solid var(--error)' : '' }}>
+               <div style={{ fontSize: '2.5rem', fontWeight: '800', color: 'var(--error)', marginBottom: '8px' }}>{unresolvedDoubts}</div>
+               <div style={{ color: '#64748b', fontSize: '0.9rem', fontWeight: '600', textTransform: 'uppercase' }}>Open Questions</div>
+             </div>
+             
+             <div className="task-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '32px 24px' }}>
+               <div style={{ fontSize: '2.5rem', fontWeight: '800', color: 'var(--primary)', marginBottom: '8px' }}>{totalStudents}</div>
+               <div style={{ color: '#64748b', fontSize: '0.9rem', fontWeight: '600', textTransform: 'uppercase' }}>Active Students</div>
+             </div>
+           </div>
+         )}
+
+         {/* Tab Content Areas */}
+         <div style={{ flexGrow: 1 }}>
           
           {/* Overview Tab */}
           {activeTab === 'overview' && (
@@ -278,12 +268,13 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
               {/* Assign Task */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 <h2 style={{ fontSize: '1.5rem', fontWeight: '700' }}>📝 Assign New Task</h2>
-                <form onSubmit={handleCreateTask} style={{ background: 'rgba(255,255,255,0.02)', padding: '24px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <form onSubmit={handleCreateTask} style={{ background: '#f8fafc', padding: '24px', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
                   <input 
                     className="input-field" 
                     placeholder="Task Title (e.g., Build a Responsive Navbar)" 
                     value={newTaskTitle} 
                     onChange={e => setNewTaskTitle(e.target.value)} 
+                    style={{ background: 'white' }}
                   />
                   <textarea 
                     className="input-field" 
@@ -291,6 +282,7 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
                     rows={5}
                     value={newTaskDesc} 
                     onChange={e => setNewTaskDesc(e.target.value)} 
+                    style={{ background: 'white' }}
                   />
                   <button type="submit" className="btn-primary" style={{ width: '100%' }}>Create Assignment</button>
                 </form>
@@ -309,7 +301,7 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
                 <form onSubmit={handlePostNote} style={{ display: 'flex', gap: '12px' }}>
                   <input 
                     className="input-field" 
-                    style={{ marginBottom: 0, flexGrow: 1 }} 
+                    style={{ marginBottom: 0, flexGrow: 1, background: '#f8fafc' }} 
                     placeholder="Send a live update to all students..." 
                     value={noteContent}
                     onChange={e => setNoteContent(e.target.value)}
@@ -319,8 +311,8 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
 
                 <div style={{ overflowY: 'auto', maxHeight: '300px', display: 'flex', flexDirection: 'column', gap: '12px', paddingRight: '8px' }}>
                   {notes.map(note => (
-                    <div key={note.id} style={{ background: 'rgba(59, 130, 246, 0.08)', padding: '16px', borderRadius: '12px', borderLeft: '3px solid var(--primary)' }}>
-                      <p style={{ fontSize: '0.95rem', lineHeight: '1.5', color: '#f8fafc' }}>{note.content}</p>
+                    <div key={note.id} style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', borderLeft: '3px solid var(--primary)' }}>
+                      <p style={{ fontSize: '0.95rem', lineHeight: '1.5', color: '#1e293b' }}>{note.content}</p>
                       <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '8px', textAlign: 'right', fontWeight: '600' }}>
                         {new Date(note.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                       </div>
@@ -339,12 +331,12 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
                   {submissions.map((sub) => (
                     <div key={sub.id} className="task-card" style={{ borderLeft: sub.verified ? '4px solid var(--success)' : '4px solid var(--accent)' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <div style={{ fontWeight: '600', fontSize: '1.1rem', color: '#f8fafc' }}>{sub.profiles?.full_name || 'Student'}</div>
+                        <div style={{ fontWeight: '600', fontSize: '1.1rem', color: '#1e293b' }}>{sub.profiles?.full_name || 'Student'}</div>
                         <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
                           {new Date(sub.submitted_at).toLocaleDateString()}
                         </div>
                       </div>
-                      <div style={{ fontSize: '0.85rem', color: '#94a3b8', marginBottom: '16px', marginTop: '4px' }}>Assignment: {sub.tasks?.title}</div>
+                      <div style={{ fontSize: '0.85rem', color: '#475569', marginBottom: '16px', marginTop: '4px' }}>Assignment: {sub.tasks?.title}</div>
                       
                       {sub.file_url && (
                         <a href={sub.file_url} target="_blank" rel="noreferrer" style={{ fontSize: '0.8rem', color: 'var(--primary)', display: 'inline-flex', alignItems: 'center', gap: '6px', marginBottom: '20px', background: 'rgba(59, 130, 246, 0.1)', padding: '6px 12px', borderRadius: '6px', fontWeight: '600' }}>
@@ -360,24 +352,24 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
                               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                               Graded
                             </span>
-                            <span style={{ fontWeight: '800', color: '#f8fafc', fontSize: '1.1rem' }}>{sub.points} Points</span>
+                            <span style={{ fontWeight: '800', color: '#1e293b', fontSize: '1.1rem' }}>{sub.points} Points</span>
                           </div>
                           {sub.remark && (
-                             <div style={{ fontSize: '0.9rem', color: '#cbd5e1', background: 'rgba(0,0,0,0.2)', padding: '12px', borderRadius: '8px' }}>
+                             <div style={{ fontSize: '0.9rem', color: '#475569', background: '#f8fafc', padding: '12px', borderRadius: '8px' }}>
                                💬 {sub.remark}
                              </div>
                           )}
                         </div>
                       ) : (
-                        <div style={{ background: 'rgba(0,0,0,0.2)', padding: '20px', borderRadius: '12px', border: '1px dashed rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                          <div style={{ fontSize: '0.9rem', color: '#f8fafc', fontWeight: '600' }}>Evaluate this submission:</div>
+                        <div style={{ background: '#f8fafc', padding: '20px', borderRadius: '12px', border: '1px dashed #cbd5e1', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                          <div style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600' }}>Evaluate this submission:</div>
                           <input 
                             type="number" 
                             placeholder="Points awarded (e.g. 10)" 
                             className="input-field" 
                             value={grades[sub.id]?.points || ''} 
                             onChange={e => setGrades(prev => ({...prev, [sub.id]: { ...prev[sub.id], points: e.target.value }}))} 
-                            style={{ marginBottom: 0 }} 
+                            style={{ marginBottom: 0, background: 'white' }} 
                           />
                           <textarea 
                             placeholder="Constructive feedback... (optional)" 
@@ -385,7 +377,7 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
                             rows={3} 
                             value={grades[sub.id]?.remark || ''} 
                             onChange={e => setGrades(prev => ({...prev, [sub.id]: { ...prev[sub.id], remark: e.target.value }}))} 
-                            style={{ marginBottom: 0 }} 
+                            style={{ marginBottom: 0, background: 'white' }} 
                           />
                           <button onClick={() => handleGradeSubmission(sub.id)} className="btn-primary" style={{ padding: '12px', fontWeight: '700' }}>
                             Verify & Submit Grade
@@ -407,7 +399,7 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
                   {doubts.map(doubt => (
                     <div key={doubt.id} className="task-card" style={{ borderLeft: doubt.resolved ? '4px solid var(--success)' : '4px solid var(--error)' }}>
                       <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
-                        <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%)', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '1rem', fontWeight: 'bold' }}>
+                        <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%)', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '1rem', fontWeight: 'bold', color: 'white' }}>
                           {(doubt.profiles?.full_name || 'S').charAt(0).toUpperCase()}
                         </div>
                         <div style={{ flexGrow: 1 }}>
@@ -415,7 +407,7 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
                              <span style={{ fontWeight: '600' }}>{doubt.profiles?.full_name || 'Student'}</span>
                              <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{new Date(doubt.created_at).toLocaleDateString()}</span>
                           </div>
-                          <p style={{ fontSize: '1rem', color: '#f8fafc', lineHeight: '1.5' }}>{doubt.question}</p>
+                          <p style={{ fontSize: '1rem', color: '#1e293b', lineHeight: '1.5' }}>{doubt.question}</p>
                           {doubt.file_url && (
                              <a href={doubt.file_url} target="_blank" rel="noreferrer" style={{ fontSize: '0.85rem', color: 'var(--primary)', display: 'inline-flex', alignItems: 'center', gap: '6px', marginTop: '12px', background: 'rgba(59, 130, 246, 0.1)', padding: '8px 12px', borderRadius: '8px', fontWeight: '600' }}>
                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
@@ -427,17 +419,17 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
                       
                       {doubt.resolved ? (
                         <div style={{ display: 'flex', gap: '12px', background: 'rgba(16, 185, 129, 0.05)', padding: '20px', borderRadius: '12px', borderLeft: '4px solid var(--success)', marginLeft: '32px' }}>
-                          <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--success)', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '0.8rem', fontWeight: 'bold' }}>T</div>
+                          <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--success)', color: 'white', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '0.8rem', fontWeight: 'bold' }}>T</div>
                           <div>
                              <div style={{ fontWeight: '600', color: 'var(--success)', marginBottom: '8px' }}>Your Reply</div>
-                             <p style={{ fontSize: '0.95rem', color: '#e2e8f0', lineHeight: '1.5' }}>{doubt.answer}</p>
+                             <p style={{ fontSize: '0.95rem', color: '#475569', lineHeight: '1.5' }}>{doubt.answer}</p>
                           </div>
                         </div>
                       ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', background: 'rgba(0,0,0,0.2)', padding: '20px', borderRadius: '12px', marginLeft: '32px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', background: '#f8fafc', padding: '20px', borderRadius: '12px', marginLeft: '32px' }}>
                           <textarea 
                             className="input-field" 
-                            style={{ marginBottom: 0, minHeight: '80px' }} 
+                            style={{ marginBottom: 0, minHeight: '80px', background: 'white' }} 
                             placeholder="Write your answer..." 
                             value={replyContent[doubt.id] || ''}
                             onChange={e => setReplyContent(prev => ({ ...prev, [doubt.id]: e.target.value }))}
@@ -468,9 +460,8 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
                     <div 
                       key={student.id} 
                       onClick={() => setSelectedStudent(student)}
-                      style={{ display: 'flex', alignItems: 'center', gap: '16px', background: 'rgba(255,255,255,0.03)', padding: '20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer', transition: 'all 0.2s ease' }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.08)')}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
+                      className="task-card"
+                      style={{ display: 'flex', alignItems: 'center', gap: '16px', cursor: 'pointer', padding: '20px' }}
                     >
                       {student.avatar_url ? (
                         <img src={student.avatar_url} alt={student.full_name} style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
@@ -480,7 +471,7 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
                         </div>
                       )}
                       <div>
-                        <div style={{ fontWeight: '700', fontSize: '1.1rem', color: '#f8fafc' }}>{student.full_name}</div>
+                        <div style={{ fontWeight: '700', fontSize: '1.1rem', color: '#1e293b' }}>{student.full_name}</div>
                         <div style={{ fontSize: '0.85rem', color: 'var(--success)', fontWeight: '600', marginTop: '4px' }}>
                           {student.student_class ? `Class: ${student.student_class}` : 'Active Student'}
                         </div>
@@ -501,8 +492,8 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
               {leaderboard.length === 0 ? <p style={{textAlign: 'center', color: '#94a3b8', fontStyle: 'italic'}}>No graded assignments yet.</p> : (
                 leaderboard.map((student, index) => {
                   let badge = '';
-                  let bg = 'rgba(255,255,255,0.02)';
-                  let border = '1px solid rgba(255,255,255,0.05)';
+                  let bg = '#ffffff';
+                  let border = '1px solid #e2e8f0';
                   
                   if (index === 0) { badge = '🥇'; bg = 'rgba(250, 204, 21, 0.1)'; border = '1px solid rgba(250, 204, 21, 0.3)'; }
                   else if (index === 1) { badge = '🥈'; bg = 'rgba(148, 163, 184, 0.1)'; border = '1px solid rgba(148, 163, 184, 0.3)'; }
@@ -511,7 +502,7 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
                   return (
                     <div key={student.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', background: bg, border: border, borderRadius: '16px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                        <div style={{ fontSize: '1.5rem', fontWeight: 'bold', width: '40px', textAlign: 'center', color: index < 3 ? '#fff' : '#64748b' }}>
+                        <div style={{ fontSize: '1.5rem', fontWeight: 'bold', width: '40px', textAlign: 'center', color: index < 3 ? '#1e293b' : '#94a3b8' }}>
                           {badge || `#${index + 1}`}
                         </div>
                         {student.avatar ? (
@@ -521,10 +512,10 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
                             {student.name.charAt(0).toUpperCase()}
                           </div>
                         )}
-                        <div style={{ fontWeight: '700', fontSize: '1.2rem', color: '#f8fafc' }}>{student.name}</div>
+                        <div style={{ fontWeight: '700', fontSize: '1.2rem', color: '#1e293b' }}>{student.name}</div>
                       </div>
                       <div style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--primary)' }}>
-                        {student.points} <span style={{ fontSize: '0.9rem', color: '#94a3b8', fontWeight: '600' }}>pts</span>
+                        {student.points} <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '600' }}>pts</span>
                       </div>
                     </div>
                   )
@@ -533,26 +524,26 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
             </div>
           )}
 
-        </div>
-      </section>
+         </div>
+      </main>
 
       {/* Student Details Modal */}
       {selectedStudent && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '20px', backdropFilter: 'blur(8px)' }}>
-          <div className="glass-panel" style={{ width: '100%', maxWidth: '800px', maxHeight: '90vh', overflowY: 'auto', padding: '40px', position: 'relative' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.4)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '20px', backdropFilter: 'blur(4px)' }}>
+          <div className="glass-panel" style={{ width: '100%', maxWidth: '800px', maxHeight: '90vh', overflowY: 'auto', padding: '40px', position: 'relative', background: 'white' }}>
             <button 
               onClick={() => setSelectedStudent(null)}
-              style={{ position: 'absolute', top: '24px', right: '24px', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', width: '36px', height: '36px', borderRadius: '50%', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+              style={{ position: 'absolute', top: '24px', right: '24px', background: '#f1f5f9', border: 'none', color: '#64748b', width: '36px', height: '36px', borderRadius: '50%', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
             
-            <div style={{ display: 'flex', alignItems: 'center', gap: '24px', marginBottom: '40px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '32px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '24px', marginBottom: '40px', borderBottom: '1px solid #e2e8f0', paddingBottom: '32px' }}>
               <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '2.5rem', color: 'white' }}>
                 {selectedStudent.full_name.charAt(0).toUpperCase()}
               </div>
               <div>
-                <h2 style={{ fontSize: '2rem', fontWeight: '800', margin: 0 }}>{selectedStudent.full_name}</h2>
+                <h2 style={{ fontSize: '2rem', fontWeight: '800', margin: 0, color: '#1e293b' }}>{selectedStudent.full_name}</h2>
                 <div style={{ fontSize: '1.1rem', color: 'var(--success)', fontWeight: '600', marginTop: '4px' }}>
                   {selectedStudent.student_class ? `Class: ${selectedStudent.student_class}` : 'No class specified'}
                 </div>
@@ -561,7 +552,7 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '32px' }}>
               <div>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px', color: '#1e293b' }}>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                   Submissions
                 </h3>
@@ -570,9 +561,9 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
                     <p style={{ color: '#94a3b8', fontStyle: 'italic', fontSize: '0.9rem' }}>No submissions found.</p>
                   ) : (
                     submissions.filter(s => s.student_id === selectedStudent.id).map(sub => (
-                      <div key={sub.id} style={{ background: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: '12px', borderLeft: sub.verified ? '3px solid var(--success)' : '3px solid var(--accent)' }}>
-                        <div style={{ fontWeight: '600', fontSize: '0.95rem' }}>{sub.tasks?.title}</div>
-                        <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '4px' }}>{new Date(sub.submitted_at).toLocaleDateString()}</div>
+                      <div key={sub.id} style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', borderLeft: sub.verified ? '3px solid var(--success)' : '3px solid var(--accent)' }}>
+                        <div style={{ fontWeight: '600', fontSize: '0.95rem', color: '#1e293b' }}>{sub.tasks?.title}</div>
+                        <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '4px' }}>{new Date(sub.submitted_at).toLocaleDateString()}</div>
                         {sub.verified && <div style={{ fontSize: '0.85rem', color: 'var(--success)', fontWeight: 'bold', marginTop: '8px' }}>{sub.points} Points</div>}
                       </div>
                     ))
@@ -581,7 +572,7 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
               </div>
 
               <div>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px', color: '#1e293b' }}>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--error)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
                   Questions Asked
                 </h3>
@@ -590,8 +581,8 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
                     <p style={{ color: '#94a3b8', fontStyle: 'italic', fontSize: '0.9rem' }}>No questions found.</p>
                   ) : (
                     doubts.filter(d => d.student_id === selectedStudent.id).map(doubt => (
-                      <div key={doubt.id} style={{ background: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: '12px', borderLeft: doubt.resolved ? '3px solid var(--success)' : '3px solid var(--error)' }}>
-                        <div style={{ fontSize: '0.95rem', lineHeight: '1.4' }}>"{doubt.question}"</div>
+                      <div key={doubt.id} style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', borderLeft: doubt.resolved ? '3px solid var(--success)' : '3px solid var(--error)' }}>
+                        <div style={{ fontSize: '0.95rem', lineHeight: '1.4', color: '#1e293b' }}>"{doubt.question}"</div>
                         {doubt.resolved && (
                           <div style={{ fontSize: '0.85rem', color: 'var(--success)', marginTop: '8px', background: 'rgba(16, 185, 129, 0.1)', padding: '8px', borderRadius: '6px' }}>
                             {doubt.answer}
@@ -607,33 +598,6 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
         </div>
       )}
 
-      <style dangerouslySetInnerHTML={{__html: `
-        @keyframes ping { 75%, 100% { transform: scale(2); opacity: 0; } }
-        
-        .tab-btn {
-          padding: 20px 32px;
-          background: transparent;
-          border: none;
-          color: #94a3b8;
-          font-family: inherit;
-          font-size: 1.05rem;
-          font-weight: 600;
-          cursor: pointer;
-          border-bottom: 3px solid transparent;
-          transition: all 0.3s ease;
-        }
-        
-        .tab-btn:hover {
-          color: #f8fafc;
-          background: rgba(255,255,255,0.02);
-        }
-        
-        .tab-btn.active {
-          color: var(--primary);
-          border-bottom: 3px solid var(--primary);
-          background: rgba(59, 130, 246, 0.05);
-        }
-      `}} />
     </div>
   );
 }

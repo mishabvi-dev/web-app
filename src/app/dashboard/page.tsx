@@ -45,15 +45,12 @@ export default function Dashboard() {
   }
 
   return (
-    <div>
-      <Navbar role={profile.role} name={profile.full_name} />
-      <main style={{ padding: '32px', maxWidth: '1200px', margin: '0 auto' }}>
-        {profile.role === 'teacher' ? (
-          <TeacherDashboard profileId={profile.id} />
-        ) : (
-          <StudentDashboard profileId={profile.id} />
-        )}
-      </main>
+    <div style={{ minHeight: '100vh', display: 'flex', background: 'var(--background)' }}>
+      {profile.role === 'teacher' ? (
+        <TeacherDashboard profileId={profile.id} />
+      ) : (
+        <StudentDashboard profileId={profile.id} />
+      )}
     </div>
   );
 }
