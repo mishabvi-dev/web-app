@@ -161,12 +161,19 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
   const handleDeleteTask = async (taskId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!window.confirm("Are you sure you want to delete this task and all its submissions?")) return;
+    
+    // First, delete any submissions associated with this task to prevent Foreign Key constraint errors
+    await supabase.from('submissions').delete().eq('task_id', taskId);
+    
+    // Then delete the task itself
     const { error } = await supabase.from('tasks').delete().eq('id', taskId);
+    
     if (!error) {
       if (selectedTask?.id === taskId) setSelectedTask(null);
       fetchTasks();
     } else {
-      alert("Error deleting task: " + error.message);
+      console.error("Supabase error:", error);
+      alert("Error deleting task. It may be due to database permissions (RLS policies). Check the console for details.\n\nError: " + error.message);
     }
   };
 
@@ -176,7 +183,8 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
     if (!error) {
       fetchNotes();
     } else {
-      alert("Error deleting note: " + error.message);
+      console.error("Supabase error:", error);
+      alert("Error deleting broadcast. It may be due to database permissions (RLS policies).\n\nError: " + error.message);
     }
   };
 
