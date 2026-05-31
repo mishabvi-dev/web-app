@@ -391,7 +391,7 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
                 </form>
 
                 <div style={{ overflowY: 'auto', maxHeight: '300px', display: 'flex', flexDirection: 'column', gap: '12px', paddingRight: '8px' }}>
-                  {notes.map(note => (
+                  {notes.filter(n => n.content.toLowerCase().includes(searchQuery.toLowerCase())).map(note => (
                     <div key={note.id} style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', borderLeft: '3px solid var(--primary)', position: 'relative' }}>
                       <button onClick={() => handleDeleteNote(note.id)} style={{ position: 'absolute', top: '12px', right: '12px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', opacity: 0.5 }} title="Delete Broadcast">🗑️</button>
                       <p style={{ fontSize: '0.95rem', lineHeight: '1.5', color: '#1e293b', paddingRight: '24px' }}>{note.content}</p>

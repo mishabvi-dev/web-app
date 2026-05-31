@@ -341,18 +341,22 @@ export default function StudentDashboard({ profileId }: { profileId: string }) {
           {activeTab === 'feed' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <h2 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '16px' }}>Live Teacher Broadcasts</h2>
-              {notes.length === 0 ? <p style={{color: '#94a3b8', fontStyle: 'italic'}}>No announcements broadcasted yet.</p> : notes.map(note => (
-                <div key={note.id} style={{ background: '#f8fafc', padding: '24px', borderRadius: '16px', borderLeft: '4px solid var(--primary)', position: 'relative' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                     <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--primary)', color: 'white', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '0.8rem', fontWeight: 'bold' }}>T</div>
-                     <div>
-                       <div style={{ fontWeight: '600', fontSize: '0.95rem' }}>Teacher Broadcast</div>
-                       <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{new Date(note.created_at).toLocaleString()}</div>
-                     </div>
-                  </div>
-                  <p style={{ fontSize: '1.05rem', lineHeight: '1.6', color: '#1e293b' }}>{note.content}</p>
+              {notes.length === 0 ? <p style={{color: '#94a3b8', fontStyle: 'italic'}}>No announcements broadcasted yet.</p> : (
+                <div style={{ overflowY: 'auto', maxHeight: '400px', display: 'flex', flexDirection: 'column', gap: '12px', paddingRight: '8px' }}>
+                  {notes.filter(n => n.content.toLowerCase().includes(searchQuery.toLowerCase())).map(note => (
+                    <div key={note.id} style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', borderLeft: '3px solid var(--primary)', position: 'relative' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                         <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--primary)', color: 'white', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '0.8rem', fontWeight: 'bold' }}>T</div>
+                         <div>
+                           <div style={{ fontWeight: '600', fontSize: '0.95rem' }}>Teacher Broadcast</div>
+                           <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{new Date(note.created_at).toLocaleString()}</div>
+                         </div>
+                      </div>
+                      <p style={{ fontSize: '1.05rem', lineHeight: '1.6', color: '#1e293b' }}>{note.content}</p>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
           )}
 

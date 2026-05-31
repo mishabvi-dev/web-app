@@ -1,4 +1,4 @@
--- 1. Fix Deletion Policies for Teachers (Allowing any teacher to delete tasks/notes)
+-- 1. Fix Deletion Policies for Teachers (Allowing any teacher to delete tasks/notes/submissions)
 drop policy if exists "Teachers can delete tasks" on public.tasks;
 create policy "Teachers can delete tasks"
 on public.tasks for delete
@@ -10,6 +10,19 @@ create policy "Teachers can delete notes"
 on public.notes for delete
 to authenticated
 using (true);
+
+drop policy if exists "Teachers can delete submissions" on public.submissions;
+create policy "Teachers can delete submissions"
+on public.submissions for delete
+to authenticated
+using (true);
+
+-- Fix Foreign Key Constraint to Cascade Delete automatically
+alter table public.submissions drop constraint if exists submissions_task_id_fkey;
+alter table public.submissions
+  add constraint submissions_task_id_fkey
+  foreign key (task_id) references public.tasks(id)
+  on delete cascade;
 
 -- 2. Create the Storage Bucket for Materials
 insert into storage.buckets (id, name, public) 
