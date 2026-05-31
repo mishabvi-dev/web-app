@@ -21,6 +21,8 @@ export default function StudentDashboard({ profileId }: { profileId: string }) {
   const [doubts, setDoubts] = useState<any[]>([]);
   
   const [searchQuery, setSearchQuery] = useState('');
+  
+  const [linkSubmissions, setLinkSubmissions] = useState<{ [key: string]: string }>({});
 
   const [settingName, setSettingName] = useState('');
   const [settingRegNo, setSettingRegNo] = useState('');
@@ -211,6 +213,26 @@ export default function StudentDashboard({ profileId }: { profileId: string }) {
     setUploading(null);
   };
 
+  const handleLinkSubmit = async (taskId: string) => {
+    const url = linkSubmissions[taskId];
+    if (!url || url.trim() === '') return;
+    
+    setUploading(taskId);
+
+    const { error: dbError } = await supabase.from('submissions').insert([
+      { task_id: taskId, student_id: profileId, file_url: url }
+    ]);
+
+    if (!dbError) {
+      setSubmissions(prev => ({ ...prev, [taskId]: true }));
+      setLinkSubmissions(prev => ({ ...prev, [taskId]: '' }));
+    } else {
+      alert("Error submitting link: " + dbError.message);
+    }
+    
+    setUploading(null);
+  };
+
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
@@ -373,23 +395,45 @@ export default function StudentDashboard({ profileId }: { profileId: string }) {
                       </div>
                     )
                   ) : (
-                    <div style={{ background: '#f8fafc', padding: '20px', borderRadius: '12px', border: '1px dashed #cbd5e1', textAlign: 'center' }}>
-                      <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
-                        <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(59, 130, 246, 0.1)', color: 'var(--primary)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                        </div>
-                        <div>
-                          <span style={{ color: 'var(--primary)', fontWeight: '600' }}>Click to upload</span> or drag and drop
-                          <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '4px' }}>PDF, Image, Code File</div>
-                        </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      <div style={{ background: '#f8fafc', padding: '20px', borderRadius: '12px', border: '1px dashed #cbd5e1', textAlign: 'center' }}>
+                        <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
+                          <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(59, 130, 246, 0.1)', color: 'var(--primary)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                          </div>
+                          <div>
+                            <span style={{ color: 'var(--primary)', fontWeight: '600' }}>Click to upload</span> or drag and drop
+                            <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '4px' }}>PDF, Image, Code File</div>
+                          </div>
+                          <input 
+                            type="file" 
+                            onChange={(e) => handleFileUpload(task.id, e)}
+                            disabled={uploading === task.id}
+                            style={{ display: 'none' }}
+                          />
+                        </label>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '8px' }}>
                         <input 
-                          type="file" 
-                          onChange={(e) => handleFileUpload(task.id, e)}
-                          disabled={uploading === task.id}
-                          style={{ display: 'none' }}
+                          type="url" 
+                          placeholder="Or paste a Google Drive/GitHub link..."
+                          className="input-field"
+                          style={{ marginBottom: 0, flexGrow: 1 }}
+                          value={linkSubmissions[task.id] || ''}
+                          onChange={(e) => setLinkSubmissions(prev => ({ ...prev, [task.id]: e.target.value }))}
                         />
-                      </label>
-                      {uploading === task.id && <div style={{ marginTop: '16px', fontSize: '0.9rem', color: 'var(--primary)', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}><span className="spinner"></span>Uploading securely...</div>}
+                        <button 
+                          className="btn-primary" 
+                          style={{ padding: '0 16px', whiteSpace: 'nowrap' }}
+                          onClick={() => handleLinkSubmit(task.id)}
+                          disabled={uploading === task.id || !linkSubmissions[task.id]}
+                        >
+                          Submit Link
+                        </button>
+                      </div>
+                      
+                      {uploading === task.id && <div style={{ fontSize: '0.9rem', color: 'var(--primary)', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}><span className="spinner"></span>Submitting...</div>}
                     </div>
                   )}
                 </div>
