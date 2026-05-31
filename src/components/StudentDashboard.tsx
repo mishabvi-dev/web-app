@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
 
 export default function StudentDashboard({ profileId }: { profileId: string }) {
-  const [activeTab, setActiveTab] = useState<'assignments' | 'materials' | 'feed' | 'qa' | 'leaderboard'>('assignments');
+  const [activeTab, setActiveTab] = useState<'assignments' | 'materials' | 'feed' | 'qa' | 'leaderboard' | 'settings'>('assignments');
   const [loading, setLoading] = useState(true);
   const [studentName, setStudentName] = useState('Student');
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
@@ -21,6 +21,11 @@ export default function StudentDashboard({ profileId }: { profileId: string }) {
   const [doubts, setDoubts] = useState<any[]>([]);
   
   const [searchQuery, setSearchQuery] = useState('');
+
+  const [settingName, setSettingName] = useState('');
+  const [settingAvatarFile, setSettingAvatarFile] = useState<File | null>(null);
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState('');
 
   useEffect(() => {
     fetchInitialData();
@@ -40,8 +45,12 @@ export default function StudentDashboard({ profileId }: { profileId: string }) {
     setLoading(true);
     
     // Fetch Profile Name
-    const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', profileId).single();
-    if (profile) setStudentName(profile.full_name);
+    const { data: profile } = await supabase.from('profiles').select('full_name, avatar_url').eq('id', profileId).single();
+    if (profile) {
+      setStudentName(profile.full_name);
+      setSettingName(profile.full_name);
+      setAvatarUrl(profile.avatar_url || '');
+    }
 
     await Promise.all([
       fetchTasks(),
@@ -103,33 +112,57 @@ export default function StudentDashboard({ profileId }: { profileId: string }) {
   const handleAskDoubt = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!doubtContent) return;
-    setAskingDoubt(true);
 
-    let fileUrl = null;
-    
+    setAskingDoubt(true);
+    let finalUrl = null;
+
     if (doubtFile) {
       const fileExt = doubtFile.name.split('.').pop();
-      const fileName = `doubt-${profileId}-${Math.random()}.${fileExt}`;
-      
-      const { error: uploadError } = await supabase.storage
-        .from('student_work')
-        .upload(fileName, doubtFile);
-        
+      const fileName = `${profileId}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage.from('doubts').upload(fileName, doubtFile);
       if (!uploadError) {
-        const { data: { publicUrl } } = supabase.storage
-          .from('student_work')
-          .getPublicUrl(fileName);
-        fileUrl = publicUrl;
+        const { data: { publicUrl } } = supabase.storage.from('doubts').getPublicUrl(fileName);
+        finalUrl = publicUrl;
       }
     }
 
-    const { error } = await supabase.from('doubts').insert([{ student_id: profileId, question: doubtContent, file_url: fileUrl }]);
+    const { error } = await supabase.from('doubts').insert([
+      { student_id: profileId, question: doubtContent, file_url: finalUrl }
+    ]);
+
+    setAskingDoubt(false);
     if (!error) {
       setDoubtContent('');
       setDoubtFile(null);
       fetchDoubts();
     }
-    setAskingDoubt(false);
+  };
+
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsUpdatingProfile(true);
+    let finalAvatarUrl = avatarUrl;
+    
+    try {
+      if (settingAvatarFile) {
+        const fileExt = settingAvatarFile.name.split('.').pop();
+        const fileName = `${profileId}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage.from('avatars').upload(fileName, settingAvatarFile, { upsert: true });
+        if (uploadError) throw uploadError;
+        const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(fileName);
+        finalAvatarUrl = publicUrl;
+      }
+      const { error } = await supabase.from('profiles').update({ full_name: settingName, avatar_url: finalAvatarUrl }).eq('id', profileId);
+      if (error) throw error;
+      setStudentName(settingName);
+      setAvatarUrl(finalAvatarUrl);
+      setSettingAvatarFile(null);
+      alert("Profile updated successfully!");
+    } catch (err: any) {
+      alert("Error updating profile: " + err.message);
+    } finally {
+      setIsUpdatingProfile(false);
+    }
   };
 
   const handleFileUpload = async (taskId: string, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -209,6 +242,9 @@ export default function StudentDashboard({ profileId }: { profileId: string }) {
           <button className={`sidebar-link ${activeTab === 'leaderboard' ? 'active' : ''}`} onClick={() => setActiveTab('leaderboard')}>
              🏆 Leaderboard
           </button>
+          <button className={`sidebar-link ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>
+             ⚙️ Settings
+          </button>
         </div>
         
         <button className="sidebar-link" onClick={async () => { await supabase.auth.signOut(); window.location.href='/login'; }}>
@@ -230,14 +266,18 @@ export default function StudentDashboard({ profileId }: { profileId: string }) {
              onChange={(e) => setSearchQuery(e.target.value)}
            />
            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-             <div style={{ textAlign: 'right' }}>
-               <div style={{ fontWeight: '700', color: 'var(--foreground)' }}>{studentName}</div>
-               <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Student</div>
-             </div>
-             <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%)', color: 'white', display: 'flex', justifyContent: 'center', alignItems: 'center', fontWeight: 'bold', fontSize: '1.2rem' }}>
-               {studentName.charAt(0).toUpperCase()}
-             </div>
-           </div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontWeight: '700', color: 'var(--foreground)' }}>{studentName}</div>
+                <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Student</div>
+              </div>
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="Avatar" style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--primary)' }} />
+              ) : (
+                <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%)', color: 'white', display: 'flex', justifyContent: 'center', alignItems: 'center', fontWeight: 'bold', fontSize: '1.2rem' }}>
+                  {studentName.charAt(0).toUpperCase()}
+                </div>
+              )}
+            </div>
          </header>
 
          {/* Hero Section */}
@@ -291,12 +331,20 @@ export default function StudentDashboard({ profileId }: { profileId: string }) {
                       ) : (
                          <span style={{ background: 'rgba(245, 158, 11, 0.1)', color: 'var(--accent)', padding: '4px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 'bold' }}>Under Review</span>
                       )
+                    ) : task.due_date && new Date(task.due_date) < new Date() ? (
+                      <span style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--error)', padding: '4px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 'bold' }}>OVERDUE</span>
                     ) : (
                       <span style={{ background: '#f1f5f9', color: '#64748b', padding: '4px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 'bold' }}>Pending</span>
                     )}
                   </div>
                   
-                  <p style={{ color: '#475569', fontSize: '0.95rem', marginBottom: '24px', lineHeight: '1.5' }}>{task.description}</p>
+                  <p style={{ color: '#475569', fontSize: '0.95rem', marginBottom: '12px', lineHeight: '1.5' }}>{task.description}</p>
+                  
+                  {task.due_date && !sub && (
+                    <div style={{ fontSize: '0.85rem', color: new Date(task.due_date) < new Date() ? 'var(--error)' : '#f59e0b', fontWeight: 'bold', marginBottom: '16px' }}>
+                      Due: {new Date(task.due_date).toLocaleString()}
+                    </div>
+                  )}
                   
                   {sub ? (
                     sub.verified && (
@@ -497,6 +545,41 @@ export default function StudentDashboard({ profileId }: { profileId: string }) {
                   </div>
                 )}
               </div>
+            </div>
+          )}
+
+         {/* Settings Tab */}
+          {activeTab === 'settings' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', maxWidth: '600px', margin: '0 auto', width: '100%' }}>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: '700' }}>⚙️ Profile Settings</h2>
+              <form onSubmit={handleUpdateProfile} style={{ background: '#f8fafc', padding: '32px', borderRadius: '16px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+                  {settingAvatarFile ? (
+                    <img src={URL.createObjectURL(settingAvatarFile)} alt="Preview" style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover' }} />
+                  ) : avatarUrl ? (
+                    <img src={avatarUrl} alt="Avatar" style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover' }} />
+                  ) : (
+                    <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '2rem', color: 'white' }}>
+                      {settingName.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div>
+                    <label style={{ display: 'inline-block', background: 'white', border: '1px solid #cbd5e1', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.9rem', fontWeight: '600', color: '#1e293b' }}>
+                      Upload New Photo
+                      <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => setSettingAvatarFile(e.target.files ? e.target.files[0] : null)} />
+                    </label>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="form-label">Full Name</label>
+                  <input type="text" className="input-field" value={settingName} onChange={e => setSettingName(e.target.value)} required style={{ background: 'white', marginBottom: '0' }} />
+                </div>
+                
+                <button type="submit" className="btn-primary" disabled={isUpdatingProfile}>
+                  {isUpdatingProfile ? 'Saving...' : 'Save Changes'}
+                </button>
+              </form>
             </div>
           )}
 

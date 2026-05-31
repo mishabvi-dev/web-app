@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
 
 export default function TeacherDashboard({ profileId }: { profileId: string }) {
-  const [activeTab, setActiveTab] = useState<'overview' | 'assignments' | 'grading' | 'qa' | 'roster' | 'leaderboard' | 'materials'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'assignments' | 'grading' | 'qa' | 'roster' | 'leaderboard' | 'materials' | 'settings'>('overview');
   const [loading, setLoading] = useState(true);
   const [teacherName, setTeacherName] = useState('Teacher');
   const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
@@ -14,6 +14,7 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskDesc, setNewTaskDesc] = useState('');
+  const [newTaskDueDate, setNewTaskDueDate] = useState('');
   
   const [noteContent, setNoteContent] = useState('');
   const [notes, setNotes] = useState<any[]>([]);
@@ -33,6 +34,11 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
   const [isUploading, setIsUploading] = useState(false);
   
   const [searchQuery, setSearchQuery] = useState('');
+  
+  const [settingName, setSettingName] = useState('');
+  const [settingAvatarFile, setSettingAvatarFile] = useState<File | null>(null);
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState('');
 
   useEffect(() => {
     fetchInitialData();
@@ -52,8 +58,12 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
     setLoading(true);
     
     // Fetch Profile Name
-    const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', profileId).single();
-    if (profile) setTeacherName(profile.full_name);
+    const { data: profile } = await supabase.from('profiles').select('full_name, avatar_url').eq('id', profileId).single();
+    if (profile) {
+      setTeacherName(profile.full_name);
+      setSettingName(profile.full_name);
+      setAvatarUrl(profile.avatar_url || '');
+    }
 
     await Promise.all([
       fetchTasks(),
@@ -113,14 +123,45 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
     e.preventDefault();
     if (!newTaskTitle || !newTaskDesc) return;
 
-    const { error } = await supabase.from('tasks').insert([
-      { title: newTaskTitle, description: newTaskDesc, created_by: profileId }
-    ]);
+    const taskData: any = { title: newTaskTitle, description: newTaskDesc, created_by: profileId };
+    if (newTaskDueDate) {
+      taskData.due_date = new Date(newTaskDueDate).toISOString();
+    }
+
+    const { error } = await supabase.from('tasks').insert([taskData]);
     
     if (!error) {
       setNewTaskTitle('');
       setNewTaskDesc('');
+      setNewTaskDueDate('');
       fetchTasks();
+    }
+  };
+
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsUpdatingProfile(true);
+    let finalAvatarUrl = avatarUrl;
+    
+    try {
+      if (settingAvatarFile) {
+        const fileExt = settingAvatarFile.name.split('.').pop();
+        const fileName = `${profileId}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage.from('avatars').upload(fileName, settingAvatarFile, { upsert: true });
+        if (uploadError) throw uploadError;
+        const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(fileName);
+        finalAvatarUrl = publicUrl;
+      }
+      const { error } = await supabase.from('profiles').update({ full_name: settingName, avatar_url: finalAvatarUrl }).eq('id', profileId);
+      if (error) throw error;
+      setTeacherName(settingName);
+      setAvatarUrl(finalAvatarUrl);
+      setSettingAvatarFile(null);
+      alert("Profile updated successfully!");
+    } catch (err: any) {
+      alert("Error updating profile: " + err.message);
+    } finally {
+      setIsUpdatingProfile(false);
     }
   };
 
@@ -293,8 +334,11 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
           <button className={`sidebar-link ${activeTab === 'roster' ? 'active' : ''}`} onClick={() => setActiveTab('roster')}>
              👥 Roster
           </button>
-          <button className={`sidebar-link ${activeTab === 'leaderboard' ? 'active' : ''}`} onClick={() => setActiveTab('leaderboard')}>
-             🏆 Leaderboard
+          <button className={`sidebar-link ${activeTab === 'materials' ? 'active' : ''}`} onClick={() => setActiveTab('materials')}>
+             📚 Study Material
+          </button>
+          <button className={`sidebar-link ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>
+             ⚙️ Settings
           </button>
         </div>
         
@@ -317,14 +361,18 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
              onChange={(e) => setSearchQuery(e.target.value)}
            />
            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-             <div style={{ textAlign: 'right' }}>
-               <div style={{ fontWeight: '700', color: 'var(--foreground)' }}>{teacherName}</div>
-               <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Teacher</div>
-             </div>
-             <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%)', color: 'white', display: 'flex', justifyContent: 'center', alignItems: 'center', fontWeight: 'bold', fontSize: '1.2rem' }}>
-               {teacherName.charAt(0).toUpperCase()}
-             </div>
-           </div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontWeight: '700', color: 'var(--foreground)' }}>{teacherName}</div>
+                <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Teacher</div>
+              </div>
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="Avatar" style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--primary)' }} />
+              ) : (
+                <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%)', color: 'white', display: 'flex', justifyContent: 'center', alignItems: 'center', fontWeight: 'bold', fontSize: '1.2rem' }}>
+                  {teacherName.charAt(0).toUpperCase()}
+                </div>
+              )}
+            </div>
          </header>
 
          {/* Hero Section */}
@@ -402,6 +450,40 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
                   ))}
                 </div>
               </div>
+
+              {/* Analytics Dashboard */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: '700' }}>📈 Class Analytics</h2>
+                <div className="glass-panel" style={{ padding: '24px' }}>
+                  {tasks.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                      {tasks.slice(0, 3).map((task) => {
+                        const taskSubmissions = submissions.filter(s => s.task_id === task.id);
+                        const completionRate = totalStudents > 0 ? (taskSubmissions.length / totalStudents) * 100 : 0;
+                        const gradedSubmissions = taskSubmissions.filter(s => s.verified);
+                        const avgScore = gradedSubmissions.length > 0 
+                          ? (gradedSubmissions.reduce((acc, s) => acc + (s.points || 0), 0) / gradedSubmissions.length).toFixed(1) 
+                          : 'N/A';
+
+                        return (
+                          <div key={task.id} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', fontWeight: '600', color: '#1e293b' }}>
+                              <span>{task.title.length > 30 ? task.title.substring(0, 30) + '...' : task.title}</span>
+                              <span>{Math.round(completionRate)}% Completed | Avg: {avgScore}</span>
+                            </div>
+                            <div style={{ width: '100%', height: '12px', background: '#e2e8f0', borderRadius: '6px', overflow: 'hidden' }}>
+                              <div style={{ width: `${completionRate}%`, height: '100%', background: 'linear-gradient(90deg, var(--secondary) 0%, var(--primary) 100%)', transition: 'width 1s ease' }}></div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      <div style={{ textAlign: 'right', fontSize: '0.85rem', color: '#64748b', fontStyle: 'italic' }}>Showing last 3 assignments</div>
+                    </div>
+                  ) : (
+                    <p style={{ color: '#94a3b8', fontStyle: 'italic' }}>No data to show yet.</p>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 
@@ -413,13 +495,13 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
                   {/* Assign Task */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                     <h2 style={{ fontSize: '1.5rem', fontWeight: '700' }}>📝 Assign New Task</h2>
-                    <form onSubmit={handleCreateTask} style={{ background: '#f8fafc', padding: '24px', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+                    <form onSubmit={handleCreateTask} style={{ background: '#f8fafc', padding: '24px', borderRadius: '16px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                       <input 
                         className="input-field" 
                         placeholder="Task Title (e.g., Build a Responsive Navbar)" 
                         value={newTaskTitle} 
                         onChange={e => setNewTaskTitle(e.target.value)} 
-                        style={{ background: 'white' }}
+                        style={{ background: 'white', marginBottom: 0 }}
                       />
                       <textarea 
                         className="input-field" 
@@ -427,9 +509,19 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
                         rows={5}
                         value={newTaskDesc} 
                         onChange={e => setNewTaskDesc(e.target.value)} 
-                        style={{ background: 'white' }}
+                        style={{ background: 'white', marginBottom: 0 }}
                       />
-                      <button type="submit" className="btn-primary" style={{ width: '100%' }}>Create Assignment</button>
+                      <div>
+                        <label style={{ fontSize: '0.85rem', fontWeight: '600', color: '#64748b', display: 'block', marginBottom: '8px' }}>Due Date (Optional)</label>
+                        <input 
+                          type="datetime-local" 
+                          className="input-field" 
+                          value={newTaskDueDate} 
+                          onChange={e => setNewTaskDueDate(e.target.value)} 
+                          style={{ background: 'white', marginBottom: 0 }}
+                        />
+                      </div>
+                      <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '8px' }}>Create Assignment</button>
                     </form>
                   </div>
 
@@ -448,6 +540,11 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
                             <button onClick={(e) => handleDeleteTask(task.id, e)} style={{ position: 'absolute', top: '16px', right: '16px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', opacity: 0.5 }} title="Delete Task">🗑️</button>
                             <div style={{ fontWeight: '700', fontSize: '1.2rem', color: '#1e293b', paddingRight: '24px' }}>{task.title}</div>
                             <div style={{ fontSize: '0.85rem', color: '#64748b' }}>Created: {new Date(task.created_at).toLocaleDateString()}</div>
+                            {task.due_date && (
+                              <div style={{ fontSize: '0.85rem', color: new Date(task.due_date) < new Date() ? 'var(--error)' : '#f59e0b', fontWeight: 'bold' }}>
+                                Due: {new Date(task.due_date).toLocaleString()}
+                              </div>
+                            )}
                             <div style={{ color: 'var(--primary)', fontWeight: '600', marginTop: '12px', fontSize: '0.9rem' }}>View Submissions →</div>
                           </div>
                         ))}
@@ -778,6 +875,41 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
                   )
                 })
               )}
+            </div>
+          )}
+
+          {/* Settings Tab */}
+          {activeTab === 'settings' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', maxWidth: '600px', margin: '0 auto', width: '100%' }}>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: '700' }}>⚙️ Profile Settings</h2>
+              <form onSubmit={handleUpdateProfile} style={{ background: '#f8fafc', padding: '32px', borderRadius: '16px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+                  {settingAvatarFile ? (
+                    <img src={URL.createObjectURL(settingAvatarFile)} alt="Preview" style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover' }} />
+                  ) : avatarUrl ? (
+                    <img src={avatarUrl} alt="Avatar" style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover' }} />
+                  ) : (
+                    <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '2rem', color: 'white' }}>
+                      {settingName.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div>
+                    <label style={{ display: 'inline-block', background: 'white', border: '1px solid #cbd5e1', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.9rem', fontWeight: '600', color: '#1e293b' }}>
+                      Upload New Photo
+                      <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => setSettingAvatarFile(e.target.files ? e.target.files[0] : null)} />
+                    </label>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="form-label">Full Name</label>
+                  <input type="text" className="input-field" value={settingName} onChange={e => setSettingName(e.target.value)} required style={{ background: 'white', marginBottom: '0' }} />
+                </div>
+                
+                <button type="submit" className="btn-primary" disabled={isUpdatingProfile}>
+                  {isUpdatingProfile ? 'Saving...' : 'Save Changes'}
+                </button>
+              </form>
             </div>
           )}
 
