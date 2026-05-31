@@ -176,15 +176,15 @@ export default function StudentDashboard({ profileId }: { profileId: string }) {
   const rankSuffix = myRank === 1 ? 'st' : myRank === 2 ? 'nd' : myRank === 3 ? 'rd' : 'th';
 
   return (
-    <div style={{ display: 'flex', width: '100%', height: '100vh', padding: '16px', gap: '24px' }}>
+    <div className="dashboard-layout">
       
       {/* Sidebar */}
-      <aside style={{ width: '260px', background: 'var(--primary)', borderRadius: '24px', padding: '32px 24px', color: 'white', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
-        <div style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '48px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <aside className="dashboard-sidebar">
+        <div className="logo-container" style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '48px', display: 'flex', alignItems: 'center', gap: '12px' }}>
           <span style={{ fontSize: '2rem' }}>🎓</span> WebDev LMS
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flexGrow: 1 }}>
+        <div className="sidebar-nav">
           <button className={`sidebar-link ${activeTab === 'assignments' ? 'active' : ''}`} onClick={() => setActiveTab('assignments')}>
              📚 Dashboard
           </button>
@@ -205,7 +205,7 @@ export default function StudentDashboard({ profileId }: { profileId: string }) {
       </aside>
 
       {/* Main Content Area */}
-      <main className="glass-panel" style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto', padding: '32px' }}>
+      <main className="glass-panel dashboard-main">
          
          {/* Top Header */}
          <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
