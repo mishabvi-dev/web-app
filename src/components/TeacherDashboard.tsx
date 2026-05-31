@@ -36,6 +36,7 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
   const [searchQuery, setSearchQuery] = useState('');
   
   const [settingName, setSettingName] = useState('');
+  const [settingRegNo, setSettingRegNo] = useState('');
   const [settingAvatarFile, setSettingAvatarFile] = useState<File | null>(null);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState('');
@@ -58,10 +59,11 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
     setLoading(true);
     
     // Fetch Profile Name
-    const { data: profile } = await supabase.from('profiles').select('full_name, avatar_url').eq('id', profileId).single();
+    const { data: profile } = await supabase.from('profiles').select('full_name, avatar_url, regno').eq('id', profileId).single();
     if (profile) {
       setTeacherName(profile.full_name);
       setSettingName(profile.full_name);
+      setSettingRegNo(profile.regno || '');
       setAvatarUrl(profile.avatar_url || '');
     }
 
@@ -101,7 +103,7 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
   };
 
   const fetchStudents = async () => {
-    const { data, error } = await supabase.from('profiles').select('id, full_name, role, student_class, avatar_url');
+    const { data, error } = await supabase.from('profiles').select('id, full_name, role, regno, department, lh, avatar_url');
     if (error) {
        setStudentError(error.message);
     }
@@ -152,7 +154,7 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
         const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(fileName);
         finalAvatarUrl = publicUrl;
       }
-      const { error } = await supabase.from('profiles').update({ full_name: settingName, avatar_url: finalAvatarUrl }).eq('id', profileId);
+      const { error } = await supabase.from('profiles').update({ full_name: settingName, avatar_url: finalAvatarUrl, regno: settingRegNo }).eq('id', profileId);
       if (error) throw error;
       setTeacherName(settingName);
       setAvatarUrl(finalAvatarUrl);
@@ -827,7 +829,7 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
                       <div>
                         <div style={{ fontWeight: '700', fontSize: '1.1rem', color: '#1e293b' }}>{student.full_name}</div>
                         <div style={{ fontSize: '0.85rem', color: 'var(--success)', fontWeight: '600', marginTop: '4px' }}>
-                          {student.student_class ? `Class: ${student.student_class}` : 'Active Student'}
+                          {student.department ? `${student.department} | ${student.lh} | ID: ${student.regno}` : 'Active Student'}
                         </div>
                       </div>
                     </div>
@@ -905,6 +907,11 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
                   <label className="form-label">Full Name</label>
                   <input type="text" className="input-field" value={settingName} onChange={e => setSettingName(e.target.value)} required style={{ background: 'white', marginBottom: '0' }} />
                 </div>
+
+                <div>
+                  <label className="form-label">Teacher Registration No. / Employee ID</label>
+                  <input type="text" className="input-field" value={settingRegNo} onChange={e => setSettingRegNo(e.target.value)} placeholder="e.g. T-204" style={{ background: 'white', marginBottom: '0' }} />
+                </div>
                 
                 <button type="submit" className="btn-primary" disabled={isUpdatingProfile}>
                   {isUpdatingProfile ? 'Saving...' : 'Save Changes'}
@@ -933,8 +940,11 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
               </div>
               <div>
                 <h2 style={{ fontSize: '2rem', fontWeight: '800', margin: 0, color: '#1e293b' }}>{selectedStudent.full_name}</h2>
-                <div style={{ fontSize: '1.1rem', color: 'var(--success)', fontWeight: '600', marginTop: '4px' }}>
-                  {selectedStudent.student_class ? `Class: ${selectedStudent.student_class}` : 'No class specified'}
+                <div style={{ fontSize: '1.1rem', color: 'var(--success)', fontWeight: '600', marginTop: '4px', display: 'flex', gap: '16px' }}>
+                  {selectedStudent.department && <span>🏛️ {selectedStudent.department}</span>}
+                  {selectedStudent.lh && <span>📍 {selectedStudent.lh}</span>}
+                  {selectedStudent.regno && <span>🆔 {selectedStudent.regno}</span>}
+                  {!selectedStudent.department && !selectedStudent.regno && <span>No academic details provided</span>}
                 </div>
               </div>
             </div>

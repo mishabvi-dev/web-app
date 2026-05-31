@@ -23,6 +23,9 @@ export default function StudentDashboard({ profileId }: { profileId: string }) {
   const [searchQuery, setSearchQuery] = useState('');
 
   const [settingName, setSettingName] = useState('');
+  const [settingRegNo, setSettingRegNo] = useState('');
+  const [settingDepartment, setSettingDepartment] = useState('');
+  const [settingLh, setSettingLh] = useState('');
   const [settingAvatarFile, setSettingAvatarFile] = useState<File | null>(null);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState('');
@@ -45,10 +48,13 @@ export default function StudentDashboard({ profileId }: { profileId: string }) {
     setLoading(true);
     
     // Fetch Profile Name
-    const { data: profile } = await supabase.from('profiles').select('full_name, avatar_url').eq('id', profileId).single();
+    const { data: profile } = await supabase.from('profiles').select('full_name, avatar_url, regno, department, lh').eq('id', profileId).single();
     if (profile) {
       setStudentName(profile.full_name);
       setSettingName(profile.full_name);
+      setSettingRegNo(profile.regno || '');
+      setSettingDepartment(profile.department || '');
+      setSettingLh(profile.lh || '');
       setAvatarUrl(profile.avatar_url || '');
     }
 
@@ -152,7 +158,13 @@ export default function StudentDashboard({ profileId }: { profileId: string }) {
         const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(fileName);
         finalAvatarUrl = publicUrl;
       }
-      const { error } = await supabase.from('profiles').update({ full_name: settingName, avatar_url: finalAvatarUrl }).eq('id', profileId);
+      const { error } = await supabase.from('profiles').update({ 
+        full_name: settingName, 
+        avatar_url: finalAvatarUrl,
+        regno: settingRegNo,
+        department: settingDepartment,
+        lh: settingLh
+      }).eq('id', profileId);
       if (error) throw error;
       setStudentName(settingName);
       setAvatarUrl(finalAvatarUrl);
@@ -574,6 +586,22 @@ export default function StudentDashboard({ profileId }: { profileId: string }) {
                 <div>
                   <label className="form-label">Full Name</label>
                   <input type="text" className="input-field" value={settingName} onChange={e => setSettingName(e.target.value)} required style={{ background: 'white', marginBottom: '0' }} />
+                </div>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div>
+                    <label className="form-label">Student Reg No / ID</label>
+                    <input type="text" className="input-field" value={settingRegNo} onChange={e => setSettingRegNo(e.target.value)} placeholder="e.g. CS-204" style={{ background: 'white', marginBottom: '0' }} />
+                  </div>
+                  <div>
+                    <label className="form-label">Department</label>
+                    <input type="text" className="input-field" value={settingDepartment} onChange={e => setSettingDepartment(e.target.value)} placeholder="e.g. CSE" style={{ background: 'white', marginBottom: '0' }} />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="form-label">LH (Lecture Hall)</label>
+                  <input type="text" className="input-field" value={settingLh} onChange={e => setSettingLh(e.target.value)} placeholder="e.g. LH-1" style={{ background: 'white', marginBottom: '0' }} />
                 </div>
                 
                 <button type="submit" className="btn-primary" disabled={isUpdatingProfile}>
