@@ -29,6 +29,8 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
   const [newMaterialTitle, setNewMaterialTitle] = useState('');
   const [newMaterialDesc, setNewMaterialDesc] = useState('');
   const [newMaterialUrl, setNewMaterialUrl] = useState('');
+  const [newMaterialFile, setNewMaterialFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     fetchInitialData();
@@ -191,16 +193,39 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
   const handleCreateMaterial = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMaterialTitle) return;
-    const { error } = await supabase.from('materials').insert([
-      { title: newMaterialTitle, description: newMaterialDesc, url: newMaterialUrl, created_by: profileId }
-    ]);
-    if (!error) {
+    
+    setIsUploading(true);
+    let finalUrl = newMaterialUrl;
+
+    try {
+      if (newMaterialFile) {
+        const fileExt = newMaterialFile.name.split('.').pop();
+        const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
+        const filePath = `${profileId}/${fileName}`;
+        
+        const { error: uploadError } = await supabase.storage.from('materials').upload(filePath, newMaterialFile);
+        
+        if (uploadError) throw uploadError;
+        
+        const { data: { publicUrl } } = supabase.storage.from('materials').getPublicUrl(filePath);
+        finalUrl = publicUrl;
+      }
+
+      const { error } = await supabase.from('materials').insert([
+        { title: newMaterialTitle, description: newMaterialDesc, url: finalUrl, created_by: profileId }
+      ]);
+      
+      if (error) throw error;
+      
       setNewMaterialTitle('');
       setNewMaterialDesc('');
       setNewMaterialUrl('');
+      setNewMaterialFile(null);
       fetchMaterials();
-    } else {
-      alert("Error creating material: " + error.message);
+    } catch (err: any) {
+      alert("Error creating material: " + err.message);
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -499,11 +524,27 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 <h2 style={{ fontSize: '1.5rem', fontWeight: '700' }}>📤 Upload Study Material</h2>
-                <form onSubmit={handleCreateMaterial} style={{ background: '#f8fafc', padding: '24px', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
-                  <input className="input-field" placeholder="Material Title" value={newMaterialTitle} onChange={e => setNewMaterialTitle(e.target.value)} style={{ background: 'white' }} />
-                  <textarea className="input-field" placeholder="Description..." rows={3} value={newMaterialDesc} onChange={e => setNewMaterialDesc(e.target.value)} style={{ background: 'white' }} />
-                  <input className="input-field" placeholder="Resource URL (e.g. YouTube Link, Google Drive)" value={newMaterialUrl} onChange={e => setNewMaterialUrl(e.target.value)} style={{ background: 'white' }} />
-                  <button type="submit" className="btn-primary" style={{ width: '100%' }}>Share Material</button>
+                <form onSubmit={handleCreateMaterial} style={{ background: '#f8fafc', padding: '24px', borderRadius: '16px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <input className="input-field" placeholder="Material Title" value={newMaterialTitle} onChange={e => setNewMaterialTitle(e.target.value)} style={{ background: 'white', marginBottom: '0' }} />
+                  <textarea className="input-field" placeholder="Description..." rows={3} value={newMaterialDesc} onChange={e => setNewMaterialDesc(e.target.value)} style={{ background: 'white', marginBottom: '0' }} />
+                  
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ flexGrow: 1, padding: '12px', background: 'white', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
+                      <label style={{ fontSize: '0.85rem', fontWeight: '600', color: '#64748b', display: 'block', marginBottom: '8px' }}>Upload File (PDF, Image, etc.)</label>
+                      <input type="file" onChange={e => setNewMaterialFile(e.target.files ? e.target.files[0] : null)} />
+                    </div>
+                    
+                    <div style={{ fontWeight: '600', color: '#94a3b8' }}>OR</div>
+                    
+                    <div style={{ flexGrow: 1, padding: '12px', background: 'white', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
+                      <label style={{ fontSize: '0.85rem', fontWeight: '600', color: '#64748b', display: 'block', marginBottom: '8px' }}>Paste URL Link</label>
+                      <input className="input-field" placeholder="e.g. YouTube Link" value={newMaterialUrl} onChange={e => setNewMaterialUrl(e.target.value)} style={{ marginBottom: '0', border: 'none', background: '#f8fafc' }} />
+                    </div>
+                  </div>
+
+                  <button type="submit" className="btn-primary" disabled={isUploading} style={{ width: '100%', opacity: isUploading ? 0.7 : 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
+                    {isUploading ? <><span className="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px', borderTopColor: 'transparent', borderRightColor: 'transparent', borderBottomColor: 'white', borderLeftColor: 'white' }}></span> Uploading...</> : "Share Material"}
+                  </button>
                 </form>
               </div>
 
