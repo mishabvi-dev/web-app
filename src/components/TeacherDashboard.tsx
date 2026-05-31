@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
 
 export default function TeacherDashboard({ profileId }: { profileId: string }) {
-  const [activeTab, setActiveTab] = useState<'overview' | 'assignments' | 'grading' | 'qa' | 'roster' | 'leaderboard'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'assignments' | 'grading' | 'qa' | 'roster' | 'leaderboard' | 'materials'>('overview');
   const [loading, setLoading] = useState(true);
   const [teacherName, setTeacherName] = useState('Teacher');
   const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
@@ -24,6 +24,11 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
   const [doubts, setDoubts] = useState<any[]>([]);
   const [replyContent, setReplyContent] = useState<Record<string, string>>({});
   const [grades, setGrades] = useState<Record<string, { points: string, remark: string }>>({});
+
+  const [materials, setMaterials] = useState<any[]>([]);
+  const [newMaterialTitle, setNewMaterialTitle] = useState('');
+  const [newMaterialDesc, setNewMaterialDesc] = useState('');
+  const [newMaterialUrl, setNewMaterialUrl] = useState('');
 
   useEffect(() => {
     fetchInitialData();
@@ -51,10 +56,16 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
       fetchSubmissions(),
       fetchNotes(),
       fetchStudents(),
-      fetchDoubts()
+      fetchDoubts(),
+      fetchMaterials()
     ]);
     
     setLoading(false);
+  };
+
+  const fetchMaterials = async () => {
+    const { data } = await supabase.from('materials').select('*').order('created_at', { ascending: false });
+    if (data) setMaterials(data);
   };
 
   const fetchTasks = async () => {
@@ -147,6 +158,50 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
     }
   };
 
+  const handleDeleteTask = async (taskId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!window.confirm("Are you sure you want to delete this task and all its submissions?")) return;
+    const { error } = await supabase.from('tasks').delete().eq('id', taskId);
+    if (!error) {
+      if (selectedTask?.id === taskId) setSelectedTask(null);
+      fetchTasks();
+    } else {
+      alert("Error deleting task: " + error.message);
+    }
+  };
+
+  const handleDeleteNote = async (noteId: string) => {
+    if (!window.confirm("Are you sure you want to delete this broadcast?")) return;
+    const { error } = await supabase.from('notes').delete().eq('id', noteId);
+    if (!error) {
+      fetchNotes();
+    } else {
+      alert("Error deleting note: " + error.message);
+    }
+  };
+
+  const handleCreateMaterial = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMaterialTitle) return;
+    const { error } = await supabase.from('materials').insert([
+      { title: newMaterialTitle, description: newMaterialDesc, url: newMaterialUrl, created_by: profileId }
+    ]);
+    if (!error) {
+      setNewMaterialTitle('');
+      setNewMaterialDesc('');
+      setNewMaterialUrl('');
+      fetchMaterials();
+    } else {
+      alert("Error creating material: " + error.message);
+    }
+  };
+
+  const handleDeleteMaterial = async (materialId: string) => {
+    if (!window.confirm("Are you sure you want to delete this study material?")) return;
+    const { error } = await supabase.from('materials').delete().eq('id', materialId);
+    if (!error) fetchMaterials();
+  };
+
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
@@ -188,6 +243,9 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
           </button>
           <button className={`sidebar-link ${activeTab === 'assignments' ? 'active' : ''}`} onClick={() => { setActiveTab('assignments'); setSelectedTask(null); }}>
              📝 Assignments
+          </button>
+          <button className={`sidebar-link ${activeTab === 'materials' ? 'active' : ''}`} onClick={() => setActiveTab('materials')}>
+             📚 Study Material
           </button>
           <button className={`sidebar-link ${activeTab === 'grading' ? 'active' : ''}`} onClick={() => setActiveTab('grading')}>
              📥 Grading Inbox
@@ -292,8 +350,9 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
 
                 <div style={{ overflowY: 'auto', maxHeight: '300px', display: 'flex', flexDirection: 'column', gap: '12px', paddingRight: '8px' }}>
                   {notes.map(note => (
-                    <div key={note.id} style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', borderLeft: '3px solid var(--primary)' }}>
-                      <p style={{ fontSize: '0.95rem', lineHeight: '1.5', color: '#1e293b' }}>{note.content}</p>
+                    <div key={note.id} style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', borderLeft: '3px solid var(--primary)', position: 'relative' }}>
+                      <button onClick={() => handleDeleteNote(note.id)} style={{ position: 'absolute', top: '12px', right: '12px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', opacity: 0.5 }} title="Delete Broadcast">🗑️</button>
+                      <p style={{ fontSize: '0.95rem', lineHeight: '1.5', color: '#1e293b', paddingRight: '24px' }}>{note.content}</p>
                       <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '8px', textAlign: 'right', fontWeight: '600' }}>
                         {new Date(note.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                       </div>
@@ -342,9 +401,10 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
                             key={task.id} 
                             className="task-card"
                             onClick={() => setSelectedTask(task)}
-                            style={{ cursor: 'pointer', padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}
+                            style={{ cursor: 'pointer', padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px', position: 'relative' }}
                           >
-                            <div style={{ fontWeight: '700', fontSize: '1.2rem', color: '#1e293b' }}>{task.title}</div>
+                            <button onClick={(e) => handleDeleteTask(task.id, e)} style={{ position: 'absolute', top: '16px', right: '16px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', opacity: 0.5 }} title="Delete Task">🗑️</button>
+                            <div style={{ fontWeight: '700', fontSize: '1.2rem', color: '#1e293b', paddingRight: '24px' }}>{task.title}</div>
                             <div style={{ fontSize: '0.85rem', color: '#64748b' }}>Created: {new Date(task.created_at).toLocaleDateString()}</div>
                             <div style={{ color: 'var(--primary)', fontWeight: '600', marginTop: '12px', fontSize: '0.9rem' }}>View Submissions →</div>
                           </div>
@@ -423,6 +483,42 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Study Material Tab */}
+          {activeTab === 'materials' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: '700' }}>📤 Upload Study Material</h2>
+                <form onSubmit={handleCreateMaterial} style={{ background: '#f8fafc', padding: '24px', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+                  <input className="input-field" placeholder="Material Title" value={newMaterialTitle} onChange={e => setNewMaterialTitle(e.target.value)} style={{ background: 'white' }} />
+                  <textarea className="input-field" placeholder="Description..." rows={3} value={newMaterialDesc} onChange={e => setNewMaterialDesc(e.target.value)} style={{ background: 'white' }} />
+                  <input className="input-field" placeholder="Resource URL (e.g. YouTube Link, Google Drive)" value={newMaterialUrl} onChange={e => setNewMaterialUrl(e.target.value)} style={{ background: 'white' }} />
+                  <button type="submit" className="btn-primary" style={{ width: '100%' }}>Share Material</button>
+                </form>
+              </div>
+
+              <div>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '20px' }}>📚 Library</h2>
+                {materials.length === 0 ? <p style={{color: '#94a3b8', fontStyle: 'italic'}}>No materials shared yet.</p> : (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+                    {materials.map((mat) => (
+                      <div key={mat.id} className="task-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px', position: 'relative' }}>
+                        <button onClick={() => handleDeleteMaterial(mat.id)} style={{ position: 'absolute', top: '16px', right: '16px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', opacity: 0.5 }} title="Delete Material">🗑️</button>
+                        <div style={{ fontWeight: '700', fontSize: '1.2rem', color: '#1e293b', paddingRight: '24px' }}>{mat.title}</div>
+                        <div style={{ fontSize: '0.85rem', color: '#64748b' }}>Added: {new Date(mat.created_at).toLocaleDateString()}</div>
+                        {mat.description && <p style={{ fontSize: '0.95rem', color: '#475569', marginTop: '8px', flexGrow: 1 }}>{mat.description}</p>}
+                        {mat.url && (
+                          <a href={mat.url} target="_blank" rel="noreferrer" style={{ marginTop: '12px', color: 'var(--primary)', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(139, 92, 246, 0.1)', padding: '8px 16px', borderRadius: '8px', alignSelf: 'flex-start' }}>
+                            View Resource ↗
+                          </a>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
