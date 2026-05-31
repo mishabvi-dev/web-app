@@ -4,10 +4,11 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
 
 export default function TeacherDashboard({ profileId }: { profileId: string }) {
-  const [activeTab, setActiveTab] = useState<'overview' | 'grading' | 'qa' | 'roster' | 'leaderboard'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'assignments' | 'grading' | 'qa' | 'roster' | 'leaderboard'>('overview');
   const [loading, setLoading] = useState(true);
   const [teacherName, setTeacherName] = useState('Teacher');
   const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
+  const [selectedTask, setSelectedTask] = useState<any | null>(null);
 
   const [tasks, setTasks] = useState<any[]>([]);
   const [submissions, setSubmissions] = useState<any[]>([]);
@@ -185,6 +186,9 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
           <button className={`sidebar-link ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')}>
              📊 Overview
           </button>
+          <button className={`sidebar-link ${activeTab === 'assignments' ? 'active' : ''}`} onClick={() => { setActiveTab('assignments'); setSelectedTask(null); }}>
+             📝 Assignments
+          </button>
           <button className={`sidebar-link ${activeTab === 'grading' ? 'active' : ''}`} onClick={() => setActiveTab('grading')}>
              📥 Grading Inbox
              {ungradedSubmissions > 0 && <span style={{ marginLeft: 'auto', background: 'rgba(255,255,255,0.2)', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem' }}>{ungradedSubmissions}</span>}
@@ -265,29 +269,6 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
           {activeTab === 'overview' && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '32px' }}>
               
-              {/* Assign Task */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                <h2 style={{ fontSize: '1.5rem', fontWeight: '700' }}>📝 Assign New Task</h2>
-                <form onSubmit={handleCreateTask} style={{ background: '#f8fafc', padding: '24px', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
-                  <input 
-                    className="input-field" 
-                    placeholder="Task Title (e.g., Build a Responsive Navbar)" 
-                    value={newTaskTitle} 
-                    onChange={e => setNewTaskTitle(e.target.value)} 
-                    style={{ background: 'white' }}
-                  />
-                  <textarea 
-                    className="input-field" 
-                    placeholder="Detailed instructions and requirements..." 
-                    rows={5}
-                    value={newTaskDesc} 
-                    onChange={e => setNewTaskDesc(e.target.value)} 
-                    style={{ background: 'white' }}
-                  />
-                  <button type="submit" className="btn-primary" style={{ width: '100%' }}>Create Assignment</button>
-                </form>
-              </div>
-
               {/* Broadcast Note */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 <h2 style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '1.5rem', fontWeight: '700' }}>
@@ -320,6 +301,128 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
                   ))}
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Assignments Tab */}
+          {activeTab === 'assignments' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+              {!selectedTask ? (
+                <>
+                  {/* Assign Task */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    <h2 style={{ fontSize: '1.5rem', fontWeight: '700' }}>📝 Assign New Task</h2>
+                    <form onSubmit={handleCreateTask} style={{ background: '#f8fafc', padding: '24px', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+                      <input 
+                        className="input-field" 
+                        placeholder="Task Title (e.g., Build a Responsive Navbar)" 
+                        value={newTaskTitle} 
+                        onChange={e => setNewTaskTitle(e.target.value)} 
+                        style={{ background: 'white' }}
+                      />
+                      <textarea 
+                        className="input-field" 
+                        placeholder="Detailed instructions and requirements..." 
+                        rows={5}
+                        value={newTaskDesc} 
+                        onChange={e => setNewTaskDesc(e.target.value)} 
+                        style={{ background: 'white' }}
+                      />
+                      <button type="submit" className="btn-primary" style={{ width: '100%' }}>Create Assignment</button>
+                    </form>
+                  </div>
+
+                  {/* Task List */}
+                  <div>
+                    <h2 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '20px' }}>📚 Task History</h2>
+                    {tasks.length === 0 ? <p style={{color: '#94a3b8', fontStyle: 'italic'}}>No tasks created yet.</p> : (
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+                        {tasks.map((task) => (
+                          <div 
+                            key={task.id} 
+                            className="task-card"
+                            onClick={() => setSelectedTask(task)}
+                            style={{ cursor: 'pointer', padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}
+                          >
+                            <div style={{ fontWeight: '700', fontSize: '1.2rem', color: '#1e293b' }}>{task.title}</div>
+                            <div style={{ fontSize: '0.85rem', color: '#64748b' }}>Created: {new Date(task.created_at).toLocaleDateString()}</div>
+                            <div style={{ color: 'var(--primary)', fontWeight: '600', marginTop: '12px', fontSize: '0.9rem' }}>View Submissions →</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                /* Selected Task View */
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                  <button onClick={() => setSelectedTask(null)} style={{ alignSelf: 'flex-start', background: 'none', border: 'none', color: 'var(--primary)', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    ← Back to all tasks
+                  </button>
+                  <div className="task-card" style={{ padding: '24px' }}>
+                    <h2 style={{ fontSize: '1.75rem', fontWeight: '800', color: '#1e293b', marginBottom: '12px' }}>{selectedTask.title}</h2>
+                    <p style={{ color: '#475569', lineHeight: '1.6' }}>{selectedTask.description}</p>
+                  </div>
+
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#1e293b', marginTop: '16px' }}>Student Submissions</h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    {students.map((student) => {
+                      const sub = submissions.find(s => s.task_id === selectedTask.id && s.student_id === student.id);
+                      return (
+                        <div key={student.id} className="task-card" style={{ padding: '20px', borderLeft: sub ? (sub.verified ? '4px solid var(--success)' : '4px solid var(--accent)') : '4px solid #cbd5e1', display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+                          <div style={{ width: '250px', flexShrink: 0 }}>
+                            <div style={{ fontWeight: '700', fontSize: '1.1rem', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                              {student.avatar_url ? (
+                                <img src={student.avatar_url} style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} />
+                              ) : (
+                                <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--primary)', color: 'white', display: 'flex', justifyContent: 'center', alignItems: 'center', fontWeight: 'bold' }}>
+                                  {student.full_name.charAt(0)}
+                                </div>
+                              )}
+                              {student.full_name}
+                            </div>
+                            {sub ? (
+                              <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '8px' }}>Submitted: {new Date(sub.submitted_at).toLocaleDateString()}</div>
+                            ) : (
+                              <div style={{ fontSize: '0.85rem', color: '#94a3b8', marginTop: '8px', fontStyle: 'italic' }}>🔴 Not Submitted</div>
+                            )}
+                          </div>
+
+                          {sub && (
+                            <div style={{ flexGrow: 1 }}>
+                              {sub.file_url && (
+                                <a href={sub.file_url} target="_blank" rel="noreferrer" style={{ fontSize: '0.8rem', color: 'var(--primary)', display: 'inline-flex', alignItems: 'center', gap: '6px', marginBottom: '16px', background: 'rgba(59, 130, 246, 0.1)', padding: '6px 12px', borderRadius: '6px', fontWeight: '600' }}>
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+                                  View File
+                                </a>
+                              )}
+                              
+                              {sub.verified ? (
+                                <div style={{ background: 'rgba(16, 185, 129, 0.05)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span style={{ color: 'var(--success)', fontWeight: 'bold', fontSize: '0.9rem' }}>🟢 Graded</span>
+                                    <span style={{ fontWeight: '800', color: '#1e293b', fontSize: '1.1rem' }}>{sub.points} Points</span>
+                                  </div>
+                                  {sub.remark && <div style={{ fontSize: '0.9rem', color: '#475569', marginTop: '8px' }}>💬 {sub.remark}</div>}
+                                </div>
+                              ) : (
+                                <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px dashed #cbd5e1' }}>
+                                  <div style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', marginBottom: '12px' }}>🟡 Needs Grading</div>
+                                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                                    <input type="number" placeholder="Points" className="input-field" style={{ width: '100px', marginBottom: 0, background: 'white' }} value={grades[sub.id]?.points || ''} onChange={e => setGrades(prev => ({...prev, [sub.id]: { ...prev[sub.id], points: e.target.value }}))} />
+                                    <input type="text" placeholder="Suggestion / Remark" className="input-field" style={{ flexGrow: 1, minWidth: '200px', marginBottom: 0, background: 'white' }} value={grades[sub.id]?.remark || ''} onChange={e => setGrades(prev => ({...prev, [sub.id]: { ...prev[sub.id], remark: e.target.value }}))} />
+                                    <button onClick={() => handleGradeSubmission(sub.id)} className="btn-primary">Grade</button>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
