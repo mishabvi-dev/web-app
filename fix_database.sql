@@ -1,13 +1,15 @@
--- 1. Fix Deletion Policies for Teachers
+-- 1. Fix Deletion Policies for Teachers (Allowing any teacher to delete tasks/notes)
+drop policy if exists "Teachers can delete tasks" on public.tasks;
 create policy "Teachers can delete tasks"
 on public.tasks for delete
 to authenticated
-using (auth.uid() = created_by);
+using (true);
 
+drop policy if exists "Teachers can delete notes" on public.notes;
 create policy "Teachers can delete notes"
 on public.notes for delete
 to authenticated
-using (auth.uid() = created_by);
+using (true);
 
 -- 2. Create the Storage Bucket for Materials
 insert into storage.buckets (id, name, public) 

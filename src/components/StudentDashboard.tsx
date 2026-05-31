@@ -19,6 +19,8 @@ export default function StudentDashboard({ profileId }: { profileId: string }) {
   const [doubtFile, setDoubtFile] = useState<File | null>(null);
   const [askingDoubt, setAskingDoubt] = useState(false);
   const [doubts, setDoubts] = useState<any[]>([]);
+  
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     fetchInitialData();
@@ -219,7 +221,14 @@ export default function StudentDashboard({ profileId }: { profileId: string }) {
          
          {/* Top Header */}
          <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-           <input type="text" placeholder="Search..." className="input-field" style={{ width: '300px', marginBottom: 0, background: '#f8fafc', border: 'none', color: '#1e293b' }} />
+           <input 
+             type="text" 
+             placeholder="Search tasks or materials..." 
+             className="input-field" 
+             style={{ width: '300px', marginBottom: 0, background: '#f8fafc', border: 'none', color: '#1e293b' }} 
+             value={searchQuery}
+             onChange={(e) => setSearchQuery(e.target.value)}
+           />
            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
              <div style={{ textAlign: 'right' }}>
                <div style={{ fontWeight: '700', color: 'var(--foreground)' }}>{studentName}</div>
@@ -270,7 +279,7 @@ export default function StudentDashboard({ profileId }: { profileId: string }) {
           {/* Assignments Tab */}
           {activeTab === 'assignments' && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
-              {tasks.length === 0 ? <p style={{color: '#94a3b8', fontStyle: 'italic'}}>No tasks assigned yet.</p> : tasks.map(task => {
+              {tasks.length === 0 ? <p style={{color: '#94a3b8', fontStyle: 'italic'}}>No tasks assigned yet.</p> : tasks.filter(t => t.title.toLowerCase().includes(searchQuery.toLowerCase())).map((task) => {
                 const sub = submissions[task.id];
                 return (
                 <div key={task.id} className="task-card" style={{ borderLeft: sub ? (sub.verified ? '4px solid var(--success)' : '4px solid var(--accent)') : '4px solid #cbd5e1' }}>
@@ -468,7 +477,7 @@ export default function StudentDashboard({ profileId }: { profileId: string }) {
                 <h2 style={{ fontSize: '1.75rem', fontWeight: '800', marginBottom: '24px' }}>📚 Study Material & Syllabus</h2>
                 {materials.length === 0 ? <p style={{color: '#94a3b8', fontStyle: 'italic'}}>No materials have been shared yet.</p> : (
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
-                    {materials.map((mat) => (
+                    {materials.filter(m => m.title.toLowerCase().includes(searchQuery.toLowerCase())).map((mat) => (
                       <div key={mat.id} className="task-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                         <div style={{ fontWeight: '800', fontSize: '1.25rem', color: '#1e293b' }}>{mat.title}</div>
                         {mat.description && <p style={{ fontSize: '0.95rem', color: '#475569', lineHeight: '1.5', flexGrow: 1 }}>{mat.description}</p>}

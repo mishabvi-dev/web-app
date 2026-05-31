@@ -31,6 +31,8 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
   const [newMaterialUrl, setNewMaterialUrl] = useState('');
   const [newMaterialFile, setNewMaterialFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     fetchInitialData();
@@ -306,7 +308,14 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
          
          {/* Top Header */}
          <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-           <input type="text" placeholder="Search students or tasks..." className="input-field" style={{ width: '300px', marginBottom: 0, background: '#f8fafc', border: 'none', color: '#1e293b' }} />
+           <input 
+             type="text" 
+             placeholder="Search tasks or materials..." 
+             className="input-field" 
+             style={{ width: '300px', marginBottom: 0, background: '#f8fafc', border: 'none', color: '#1e293b' }} 
+             value={searchQuery}
+             onChange={(e) => setSearchQuery(e.target.value)}
+           />
            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
              <div style={{ textAlign: 'right' }}>
                <div style={{ fontWeight: '700', color: 'var(--foreground)' }}>{teacherName}</div>
@@ -429,7 +438,7 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
                     <h2 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '20px' }}>📚 Task History</h2>
                     {tasks.length === 0 ? <p style={{color: '#94a3b8', fontStyle: 'italic'}}>No tasks created yet.</p> : (
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
-                        {tasks.map((task) => (
+                        {tasks.filter(t => t.title.toLowerCase().includes(searchQuery.toLowerCase())).map((task) => (
                           <div 
                             key={task.id} 
                             className="task-card"
@@ -552,7 +561,7 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
                 <h2 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '20px' }}>📚 Library</h2>
                 {materials.length === 0 ? <p style={{color: '#94a3b8', fontStyle: 'italic'}}>No materials shared yet.</p> : (
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
-                    {materials.map((mat) => (
+                    {materials.filter(m => m.title.toLowerCase().includes(searchQuery.toLowerCase())).map((mat) => (
                       <div key={mat.id} className="task-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px', position: 'relative' }}>
                         <button onClick={() => handleDeleteMaterial(mat.id)} style={{ position: 'absolute', top: '16px', right: '16px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', opacity: 0.5 }} title="Delete Material">🗑️</button>
                         <div style={{ fontWeight: '700', fontSize: '1.2rem', color: '#1e293b', paddingRight: '24px' }}>{mat.title}</div>
