@@ -4,9 +4,10 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
 
 export default function StudentDashboard({ profileId }: { profileId: string }) {
-  const [activeTab, setActiveTab] = useState<'assignments' | 'feed' | 'qa'>('assignments');
+  const [activeTab, setActiveTab] = useState<'assignments' | 'feed' | 'qa' | 'leaderboard'>('assignments');
   const [loading, setLoading] = useState(true);
   const [studentName, setStudentName] = useState('Student');
+  const [leaderboard, setLeaderboard] = useState<any[]>([]);
 
   const [tasks, setTasks] = useState<any[]>([]);
   const [notes, setNotes] = useState<any[]>([]);
@@ -43,7 +44,8 @@ export default function StudentDashboard({ profileId }: { profileId: string }) {
       fetchTasks(),
       fetchMySubmissions(),
       fetchNotes(),
-      fetchDoubts()
+      fetchDoubts(),
+      fetchLeaderboard()
     ]);
     
     setLoading(false);
@@ -71,6 +73,22 @@ export default function StudentDashboard({ profileId }: { profileId: string }) {
   const fetchDoubts = async () => {
     const { data } = await supabase.from('doubts').select('*').eq('student_id', profileId).order('created_at', { ascending: false });
     if (data) setDoubts(data);
+  };
+
+  const fetchLeaderboard = async () => {
+    const { data } = await supabase.from('submissions').select('student_id, points, profiles!student_id(full_name, avatar_url)').eq('verified', true);
+    if (data) {
+      const scores: Record<string, any> = {};
+      data.forEach(sub => {
+        if (sub.points) {
+          if (!scores[sub.student_id]) {
+            scores[sub.student_id] = { id: sub.student_id, name: sub.profiles?.full_name || 'Unknown', points: 0, avatar: sub.profiles?.avatar_url };
+          }
+          scores[sub.student_id].points += sub.points;
+        }
+      });
+      setLeaderboard(Object.values(scores).sort((a: any, b: any) => b.points - a.points));
+    }
   };
 
   const handleAskDoubt = async (e: React.FormEvent) => {
@@ -153,6 +171,10 @@ export default function StudentDashboard({ profileId }: { profileId: string }) {
   const pendingTasks = totalTasks - completedTasks;
   const progressPercentage = totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100);
 
+  const myRankIndex = leaderboard.findIndex(s => s.id === profileId);
+  const myRank = myRankIndex !== -1 ? myRankIndex + 1 : null;
+  const rankSuffix = myRank === 1 ? 'st' : myRank === 2 ? 'nd' : myRank === 3 ? 'rd' : 'th';
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       
@@ -163,7 +185,7 @@ export default function StudentDashboard({ profileId }: { profileId: string }) {
             Welcome back, <span style={{ color: 'var(--primary)' }}>{studentName.split(' ')[0]}</span>! 👋
           </h1>
           <p style={{ color: '#94a3b8', fontSize: '1.1rem' }}>
-            {pendingTasks > 0 ? `You have ${pendingTasks} assignment${pendingTasks > 1 ? 's' : ''} left to complete.` : "You're all caught up! Great job."}
+            {myRank ? `You are currently in ${myRank}${rankSuffix} place on the leaderboard! 🏆` : "Complete assignments to climb the leaderboard!"}
           </p>
         </div>
         
@@ -241,6 +263,13 @@ export default function StudentDashboard({ profileId }: { profileId: string }) {
             style={{ flexShrink: 0 }}
           >
             ❓ Private Q&A
+          </button>
+          <button 
+            className={`tab-btn ${activeTab === 'leaderboard' ? 'active' : ''}`}
+            onClick={() => setActiveTab('leaderboard')}
+            style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: '8px' }}
+          >
+            🏆 Leaderboard
           </button>
         </div>
 
@@ -395,6 +424,48 @@ export default function StudentDashboard({ profileId }: { profileId: string }) {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Leaderboard Tab */}
+          {activeTab === 'leaderboard' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
+              <h2 style={{ fontSize: '1.75rem', fontWeight: '800', textAlign: 'center', marginBottom: '24px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px' }}>
+                <span style={{ fontSize: '2.5rem' }}>🏆</span> Class Leaderboard
+              </h2>
+              {leaderboard.length === 0 ? <p style={{textAlign: 'center', color: '#94a3b8', fontStyle: 'italic'}}>No graded assignments yet.</p> : (
+                leaderboard.map((student, index) => {
+                  let badge = '';
+                  let bg = student.id === profileId ? 'rgba(59, 130, 246, 0.1)' : 'rgba(255,255,255,0.02)';
+                  let border = student.id === profileId ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid rgba(255,255,255,0.05)';
+                  
+                  if (index === 0) { badge = '🥇'; bg = 'rgba(250, 204, 21, 0.1)'; border = '1px solid rgba(250, 204, 21, 0.3)'; }
+                  else if (index === 1) { badge = '🥈'; bg = 'rgba(148, 163, 184, 0.1)'; border = '1px solid rgba(148, 163, 184, 0.3)'; }
+                  else if (index === 2) { badge = '🥉'; bg = 'rgba(180, 83, 9, 0.1)'; border = '1px solid rgba(180, 83, 9, 0.3)'; }
+
+                  return (
+                    <div key={student.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', background: bg, border: border, borderRadius: '16px', position: 'relative' }}>
+                      {student.id === profileId && <div style={{ position: 'absolute', top: '-10px', right: '20px', background: 'var(--primary)', fontSize: '0.7rem', padding: '2px 8px', borderRadius: '10px', fontWeight: 'bold' }}>YOU</div>}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                        <div style={{ fontSize: '1.5rem', fontWeight: 'bold', width: '40px', textAlign: 'center', color: index < 3 ? '#fff' : '#64748b' }}>
+                          {badge || `#${index + 1}`}
+                        </div>
+                        {student.avatar ? (
+                          <img src={student.avatar} alt={student.name} style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover' }} />
+                        ) : (
+                          <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '1.25rem', color: 'white' }}>
+                            {student.name.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                        <div style={{ fontWeight: '700', fontSize: '1.2rem', color: '#f8fafc' }}>{student.name}</div>
+                      </div>
+                      <div style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--primary)' }}>
+                        {student.points} <span style={{ fontSize: '0.9rem', color: '#94a3b8', fontWeight: '600' }}>pts</span>
+                      </div>
+                    </div>
+                  )
+                })
+              )}
             </div>
           )}
 

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
 
 export default function TeacherDashboard({ profileId }: { profileId: string }) {
-  const [activeTab, setActiveTab] = useState<'overview' | 'grading' | 'qa' | 'roster'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'grading' | 'qa' | 'roster' | 'leaderboard'>('overview');
   const [loading, setLoading] = useState(true);
   const [teacherName, setTeacherName] = useState('Teacher');
   const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
@@ -75,7 +75,7 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
   };
 
   const fetchStudents = async () => {
-    const { data, error } = await supabase.from('profiles').select('id, full_name, role, student_class');
+    const { data, error } = await supabase.from('profiles').select('id, full_name, role, student_class, avatar_url');
     if (error) {
        setStudentError(error.message);
     }
@@ -154,10 +154,23 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
     );
   }
 
-  // Calculate Metrics
   const ungradedSubmissions = submissions.filter(s => !s.verified).length;
   const unresolvedDoubts = doubts.filter(d => !d.resolved).length;
   const totalStudents = students.length;
+
+  const getLeaderboard = () => {
+    const scores: Record<string, any> = {};
+    submissions.forEach(sub => {
+      if (sub.verified && sub.points) {
+        if (!scores[sub.student_id]) {
+          scores[sub.student_id] = { id: sub.student_id, name: sub.profiles?.full_name || 'Unknown', points: 0, avatar: sub.profiles?.avatar_url };
+        }
+        scores[sub.student_id].points += sub.points;
+      }
+    });
+    return Object.values(scores).sort((a, b) => b.points - a.points);
+  };
+  const leaderboard = getLeaderboard();
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -245,6 +258,13 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
             style={{ flexShrink: 0 }}
           >
             👥 Roster
+          </button>
+          <button 
+            className={`tab-btn ${activeTab === 'leaderboard' ? 'active' : ''}`}
+            onClick={() => setActiveTab('leaderboard')}
+            style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: '8px' }}
+          >
+            🏆 Leaderboard
           </button>
         </div>
 
@@ -452,9 +472,13 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
                       onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.08)')}
                       onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
                     >
-                      <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '1.5rem', color: 'white', flexShrink: 0 }}>
-                        {student.full_name.charAt(0).toUpperCase()}
-                      </div>
+                      {student.avatar_url ? (
+                        <img src={student.avatar_url} alt={student.full_name} style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                      ) : (
+                        <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '1.5rem', color: 'white', flexShrink: 0 }}>
+                          {student.full_name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
                       <div>
                         <div style={{ fontWeight: '700', fontSize: '1.1rem', color: '#f8fafc' }}>{student.full_name}</div>
                         <div style={{ fontSize: '0.85rem', color: 'var(--success)', fontWeight: '600', marginTop: '4px' }}>
@@ -464,6 +488,47 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
                     </div>
                   ))}
                 </div>
+              )}
+            </div>
+          )}
+
+          {/* Leaderboard Tab */}
+          {activeTab === 'leaderboard' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
+              <h2 style={{ fontSize: '1.75rem', fontWeight: '800', textAlign: 'center', marginBottom: '24px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px' }}>
+                <span style={{ fontSize: '2.5rem' }}>🏆</span> Class Leaderboard
+              </h2>
+              {leaderboard.length === 0 ? <p style={{textAlign: 'center', color: '#94a3b8', fontStyle: 'italic'}}>No graded assignments yet.</p> : (
+                leaderboard.map((student, index) => {
+                  let badge = '';
+                  let bg = 'rgba(255,255,255,0.02)';
+                  let border = '1px solid rgba(255,255,255,0.05)';
+                  
+                  if (index === 0) { badge = '🥇'; bg = 'rgba(250, 204, 21, 0.1)'; border = '1px solid rgba(250, 204, 21, 0.3)'; }
+                  else if (index === 1) { badge = '🥈'; bg = 'rgba(148, 163, 184, 0.1)'; border = '1px solid rgba(148, 163, 184, 0.3)'; }
+                  else if (index === 2) { badge = '🥉'; bg = 'rgba(180, 83, 9, 0.1)'; border = '1px solid rgba(180, 83, 9, 0.3)'; }
+
+                  return (
+                    <div key={student.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', background: bg, border: border, borderRadius: '16px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                        <div style={{ fontSize: '1.5rem', fontWeight: 'bold', width: '40px', textAlign: 'center', color: index < 3 ? '#fff' : '#64748b' }}>
+                          {badge || `#${index + 1}`}
+                        </div>
+                        {student.avatar ? (
+                          <img src={student.avatar} alt={student.name} style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover' }} />
+                        ) : (
+                          <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '1.25rem', color: 'white' }}>
+                            {student.name.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                        <div style={{ fontWeight: '700', fontSize: '1.2rem', color: '#f8fafc' }}>{student.name}</div>
+                      </div>
+                      <div style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--primary)' }}>
+                        {student.points} <span style={{ fontSize: '0.9rem', color: '#94a3b8', fontWeight: '600' }}>pts</span>
+                      </div>
+                    </div>
+                  )
+                })
               )}
             </div>
           )}
