@@ -336,9 +336,7 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
           <button className={`sidebar-link ${activeTab === 'roster' ? 'active' : ''}`} onClick={() => setActiveTab('roster')}>
              👥 Roster
           </button>
-          <button className={`sidebar-link ${activeTab === 'materials' ? 'active' : ''}`} onClick={() => setActiveTab('materials')}>
-             📚 Study Material
-          </button>
+
           <button className={`sidebar-link ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>
              ⚙️ Settings
           </button>
