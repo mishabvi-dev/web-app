@@ -280,6 +280,15 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
     if (!error) fetchMaterials();
   };
 
+  const handleToggleLock = async (materialId: string, currentLockState: boolean) => {
+    const { error } = await supabase.from('materials').update({ is_locked: !currentLockState }).eq('id', materialId);
+    if (!error) {
+      fetchMaterials();
+    } else {
+      alert("Error updating lock state: " + error.message);
+    }
+  };
+
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
@@ -660,8 +669,17 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
                     {materials.filter(m => m.title.toLowerCase().includes(searchQuery.toLowerCase())).map((mat) => (
                       <div key={mat.id} className="task-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px', position: 'relative' }}>
-                        <button onClick={() => handleDeleteMaterial(mat.id)} style={{ position: 'absolute', top: '16px', right: '16px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', opacity: 0.5 }} title="Delete Material">🗑️</button>
-                        <div style={{ fontWeight: '700', fontSize: '1.2rem', color: '#1e293b', paddingRight: '24px' }}>{mat.title}</div>
+                        <div style={{ position: 'absolute', top: '16px', right: '16px', display: 'flex', gap: '8px' }}>
+                          <button onClick={() => handleToggleLock(mat.id, mat.is_locked)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', opacity: 0.7 }} title={mat.is_locked ? "Unlock Material" : "Lock Material"}>
+                            {mat.is_locked ? '🔒' : '🔓'}
+                          </button>
+                          <button onClick={() => handleDeleteMaterial(mat.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', opacity: 0.5 }} title="Delete Material">
+                            🗑️
+                          </button>
+                        </div>
+                        <div style={{ fontWeight: '700', fontSize: '1.2rem', color: '#1e293b', paddingRight: '60px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          {mat.title} {mat.is_locked && <span style={{ fontSize: '0.8rem', background: '#e2e8f0', padding: '2px 8px', borderRadius: '12px', fontWeight: 'bold' }}>Locked</span>}
+                        </div>
                         <div style={{ fontSize: '0.85rem', color: '#64748b' }}>Added: {new Date(mat.created_at).toLocaleDateString()}</div>
                         {mat.description && <p style={{ fontSize: '0.95rem', color: '#475569', marginTop: '8px', flexGrow: 1 }}>{mat.description}</p>}
                         {mat.url && (

@@ -589,11 +589,17 @@ export default function StudentDashboard({ profileId }: { profileId: string }) {
                       <div key={mat.id} className="task-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                         <div style={{ fontWeight: '800', fontSize: '1.25rem', color: '#1e293b' }}>{mat.title}</div>
                         {mat.description && <p style={{ fontSize: '0.95rem', color: '#475569', lineHeight: '1.5', flexGrow: 1 }}>{mat.description}</p>}
-                        {mat.url && (
-                          <a href={mat.url} target="_blank" rel="noreferrer" style={{ marginTop: 'auto', color: 'white', background: 'var(--primary)', fontWeight: '600', display: 'inline-flex', justifyContent: 'center', alignItems: 'center', padding: '10px 16px', borderRadius: '8px', gap: '8px' }}>
-                            View Resource
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-                          </a>
+                        {mat.is_locked ? (
+                          <div style={{ marginTop: 'auto', color: '#64748b', background: '#f1f5f9', fontWeight: '600', display: 'inline-flex', justifyContent: 'center', alignItems: 'center', padding: '10px 16px', borderRadius: '8px', gap: '8px', cursor: 'not-allowed' }}>
+                            🔒 Locked by Teacher
+                          </div>
+                        ) : (
+                          mat.url && (
+                            <a href={mat.url} target="_blank" rel="noreferrer" style={{ marginTop: 'auto', color: 'white', background: 'var(--primary)', fontWeight: '600', display: 'inline-flex', justifyContent: 'center', alignItems: 'center', padding: '10px 16px', borderRadius: '8px', gap: '8px' }}>
+                              View Resource
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                            </a>
+                          )
                         )}
                         <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '8px' }}>Shared on: {new Date(mat.created_at).toLocaleDateString()}</div>
                       </div>
