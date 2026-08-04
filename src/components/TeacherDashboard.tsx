@@ -139,7 +139,7 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
       fetchTasks();
       
       // Notify students about the new task
-      fetch('/api/notify-assignment', {
+      fetch('/lms/api/notify-assignment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: newTaskTitle, description: newTaskDesc })
@@ -209,7 +209,7 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
   };
 
   const handleNotifyStudent = async (studentId: string, studentName: string, taskTitle: string, points: number, remark: string) => {
-    fetch('/api/notify-grade', {
+    fetch('/lms/api/notify-grade', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ studentId, studentName, taskTitle, points, remark })
@@ -306,7 +306,7 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
       fetchMaterials();
 
       // Notify students about the new study material
-      fetch('/api/notify-assignment', {
+      fetch('/lms/api/notify-assignment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: newMaterialTitle, description: newMaterialDesc })
