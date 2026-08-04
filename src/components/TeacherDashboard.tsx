@@ -137,6 +137,24 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
       setNewTaskDesc('');
       setNewTaskDueDate('');
       fetchTasks();
+      
+      // Notify students about the new task
+      fetch('/api/notify-assignment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: newTaskTitle, description: newTaskDesc })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert(`Assignment added and email sent successfully to ${data.count} student(s)!`);
+        } else if (data.error) {
+          alert(`Assignment added, but failed to send email: ${data.error}`);
+        } else if (data.message) {
+          alert(`Assignment added. Email Notice: ${data.message}`);
+        }
+      })
+      .catch(err => console.error('Failed to trigger email notification:', err));
     }
   };
 
@@ -188,6 +206,25 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
       setReplyContent(prev => ({ ...prev, [doubtId]: '' }));
       fetchDoubts();
     }
+  };
+
+  const handleNotifyStudent = async (studentId: string, studentName: string, taskTitle: string, points: number, remark: string) => {
+    fetch('/api/notify-grade', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ studentId, studentName, taskTitle, points, remark })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        alert(`Email successfully sent to ${data.targetEmail}!`);
+      } else if (data.error) {
+        alert(`Failed to send email: ${data.error}`);
+      } else if (data.message) {
+        alert(`Notice: ${data.message}`);
+      }
+    })
+    .catch(err => console.error('Failed to send grade notification:', err));
   };
 
   const handleGradeSubmission = async (submissionId: string) => {
@@ -267,6 +304,24 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
       setNewMaterialUrl('');
       setNewMaterialFile(null);
       fetchMaterials();
+
+      // Notify students about the new study material
+      fetch('/api/notify-assignment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: newMaterialTitle, description: newMaterialDesc })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert(`Material uploaded and email sent successfully to ${data.count} student(s)!`);
+        } else if (data.error) {
+          alert(`Material uploaded, but failed to send email: ${data.error}`);
+        } else if (data.message) {
+          alert(`Material uploaded. Email Notice: ${data.message}`);
+        }
+      })
+      .catch(err => console.error('Failed to trigger email notification:', err));
     } catch (err: any) {
       alert("Error creating material: " + err.message);
     } finally {
@@ -727,10 +782,16 @@ export default function TeacherDashboard({ profileId }: { profileId: string }) {
                             <span style={{ fontWeight: '800', color: '#1e293b', fontSize: '1.1rem' }}>{sub.points} Points</span>
                           </div>
                           {sub.remark && (
-                             <div style={{ fontSize: '0.9rem', color: '#475569', background: '#f8fafc', padding: '12px', borderRadius: '8px' }}>
+                             <div style={{ fontSize: '0.9rem', color: '#475569', background: '#f8fafc', padding: '12px', borderRadius: '8px', marginBottom: '12px' }}>
                                💬 {sub.remark}
                              </div>
                           )}
+                          <button 
+                            onClick={() => handleNotifyStudent(sub.student_id, sub.profiles?.full_name, sub.tasks?.title, sub.points, sub.remark)}
+                            style={{ width: '100%', padding: '10px', background: 'var(--success)', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginTop: sub.remark ? '0' : '12px' }}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                            Notify Student via Email
+                          </button>
                         </div>
                       ) : (
                         <div style={{ background: '#f8fafc', padding: '20px', borderRadius: '12px', border: '1px dashed #cbd5e1', display: 'flex', flexDirection: 'column', gap: '16px' }}>

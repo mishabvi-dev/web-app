@@ -36,29 +36,55 @@ export default function Navbar({ role, name }: { role: string, name: string }) {
             {role}
           </div>
         </div>
-        <button 
-          onClick={handleLogout}
-          style={{ 
-            background: 'rgba(239, 68, 68, 0.1)', 
-            border: '1px solid rgba(239, 68, 68, 0.3)', 
-            color: 'var(--error)', 
-            padding: '10px 20px', 
-            borderRadius: '10px',
-            transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
-            fontWeight: '600',
-            fontSize: '0.9rem'
-          }}
-          onMouseOver={(e) => {
-            e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)';
-            e.currentTarget.style.transform = 'translateY(-1px)';
-          }}
-          onMouseOut={(e) => {
-            e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
-            e.currentTarget.style.transform = 'translateY(0)';
-          }}
-        >
-          Logout
-        </button>
+          <button 
+            onClick={() => router.push('/attendance')}
+            style={{ 
+              background: 'transparent', 
+              border: '1px solid var(--primary)', 
+              color: 'var(--primary)', 
+              padding: '10px 20px', 
+              borderRadius: '10px',
+              transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
+              fontWeight: '600',
+              fontSize: '0.9rem',
+              cursor: 'pointer'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)';
+              e.currentTarget.style.transform = 'translateY(-1px)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.background = 'transparent';
+              e.currentTarget.style.transform = 'translateY(0)';
+            }}
+          >
+            Attendance
+          </button>
+          
+          <button 
+            onClick={handleLogout}
+            style={{ 
+              background: 'rgba(239, 68, 68, 0.1)', 
+              border: '1px solid rgba(239, 68, 68, 0.3)', 
+              color: 'var(--error)', 
+              padding: '10px 20px', 
+              borderRadius: '10px',
+              transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
+              fontWeight: '600',
+              fontSize: '0.9rem',
+              cursor: 'pointer'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)';
+              e.currentTarget.style.transform = 'translateY(-1px)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
+              e.currentTarget.style.transform = 'translateY(0)';
+            }}
+          >
+            Logout
+          </button>
       </div>
     </nav>
   );
