@@ -63,7 +63,7 @@ export async function POST(request: Request) {
     // In production with a verified domain, you would use: to: emailsToNotify
     const { data, error } = await resend.emails.send({
       from: 'Yenova LMS <onboarding@resend.dev>', // Change to your verified domain in production
-      to: 'delivered@resend.dev', // Sandbox safe address
+      to: 'michuteach@gmail.com', // Sandbox safe address (Teacher's verified email)
       subject: `New Assignment Posted: ${title} (Sent to ${emailsToNotify.length} students)`,
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #374151;">
