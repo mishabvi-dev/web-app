@@ -42,9 +42,9 @@ export async function POST(request: Request) {
     // Due to Resend Sandbox limits, we send to the safe test address so it shows up in the dashboard.
     // In production with a verified domain, you would use: to: studentUser.email
     const { data, error } = await resend.emails.send({
-      from: 'Yenova LMS <onboarding@resend.dev>', // Change to your verified domain in production
-      to: 'michuteach@gmail.com', // Sandbox safe address (Teacher's verified email)
-      subject: `Grade Posted: ${taskTitle} (Intended for: ${studentUser.email})`,
+      from: 'Yenova LMS <notifications@yenova.site>', // Change to your verified domain in production
+      to: studentUser.email, // Send to the actual student
+      subject: `Grade Posted: ${taskTitle}`,
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #374151;">
           <h2 style="color: #10b981;">Assignment Graded ✅</h2>
